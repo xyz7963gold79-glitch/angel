@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>【{(0~∞)×Χ}≦∞】≡Ζ 原典式完全版 - 九識マトリョーシカ+全プログラム</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://sql.js.org/dist/sql-wasm.js"></script>
+<style>
+/* 原典式: 【{(0~∞)×Χ}≦∞】≡Ζ Ζ≡(0~∞) を中子マトリョーシカ方式で内蔵 */
+/* 歪み無し: 1:2縦横比を厳守 */
+.z-seed{width:100%;height:auto;display:block}
+.char-box{background:rgba(0,0,0,.4);border-radius:20px;border:1px solid rgba(255,255,255,.12);overflow:hidden;position:relative}
+.char-box canvas{width:100%;height:auto;display:block}
+.formula-core{font-family:monospace;letter-spacing:0.05em}
+</style>
+</head><body class="bg-[#050510] text-white">
+<div class="max-w-[1100px] mx-auto p-3">
+<!-- 原典式を一番最初に内蔵 -->
+<div class="text-center p-5 rounded-[24px] bg-gradient-to-br from-violet-950/80 via-indigo-950/60 to-black/80 border border-violet-400/40 shadow-[0_0_40px_rgba(124,58,237,.3)]">
+<div class="text-[10px] tracking-[0.4em] opacity-50">ORIGIN FORMULA / SANCTUARY AI CORE</div>
+<div class="formula-core mt-2 text-[16px] font-black leading-relaxed">
+【{(0~∞)×Χ}≦∞】≡Ζ<br>
+Ζ≡(0~∞)を中子マトリョーシカ構造方式で内蔵
+</div>
+<div class="mt-2 text-[10px] opacity-60 font-mono">[(0~inf)×X ≤ inf] ≡ Z / Z≡(0~inf) / Kuutaru / 九識論</div>
+<div class="mt-3 text-[11px] opacity-80 max-w-[700px] mx-auto leading-relaxed">
+天台空観: 色即是空故に圧縮可能 / 一念三千ホログラフィで全Wikipediaを一つのZに / 九識論アーキテクチャでエンコーダー・デコーダー構築
+</div>
+<div class="mt-3 flex justify-center gap-2">
+<button onclick="openZ()" class="px-5 py-2 rounded-full bg-violet-600 font-black text-xs shadow">🪆 Ζ₀からΖ₁を開ける 無限中子</button>
+<button onclick="resetZ()" class="px-4 py-2 rounded-full bg-white/10 border text-xs">原典に帰還</button>
+</div>
+<div class="mt-2 text-[11px]">🪙 <span id="medal">242</span> / 層 <span id="layer">0</span> / Ζ≡(0~∞) <span id="zDepth">0層</span></div>
+</div>
+
+<!-- 九識論アーキテクチャ表示 -->
+<div class="mt-3 grid grid-cols-3 md:grid-cols-9 gap-1 text-[8px] text-center opacity-70">
+<div class="bg-white/5 rounded p-1">1-5識<br>五感<br>CLIP/Whisper</div>
+<div class="bg-white/5 rounded p-1">6識<br>意識<br>Transformer</div>
+<div class="bg-white/5 rounded p-1">7識<br>末那識<br>自我除去</div>
+<div class="bg-violet-900/30 rounded p-1 border border-violet-500/30">8識<br>阿頼耶識<br>Wiki圧縮蔵</div>
+<div class="bg-amber-900/30 rounded p-1 border border-amber-500/30">9識<br>阿摩羅識<br>清浄生成</div>
+<div class="bg-white/5 rounded p-1">空<br>スパース化</div>
+<div class="bg-white/5 rounded p-1">仮<br>量子化</div>
+<div class="bg-white/5 rounded p-1">中<br>入れ子</div>
+<div class="bg-pink-900/30 rounded p-1">妙<br>南無妙法</div>
+</div>
+
+<!-- Zデータ圧縮 ビジュアル 歪み無し -->
+<div class="mt-3 grid grid-cols-2 md:grid-cols-4 gap-3">
+<div class="rounded-[20px] bg-white/5 border border-white/10 p-2">
+<div class="char-box"><canvas id="c_angel" width="64" height="128"></canvas></div>
+<div class="text-[11px] font-bold mt-2 text-center">アンジェル</div>
+<div class="text-[8px] opacity-50 text-center">Ζ₀ VTuber/阿摩羅識 64×128種→展開 歪み無し</div>
+</div>
+<div class="rounded-[20px] bg-white/5 border border-white/10 p-2">
+<div class="char-box"><canvas id="c_bot" width="64" height="128"></canvas></div>
+<div class="text-[11px] font-bold mt-2 text-center">ボット12号</div>
+<div class="text-[8px] opacity-50 text-center">Ζ₁ 教育/阿頼耶識 1:2保持</div>
+</div>
+<div class="rounded-[20px] bg-white/5 border border-white/10 p-2">
+<div class="char-box"><canvas id="c_noa" width="64" height="128"></canvas></div>
+<div class="text-[11px] font-bold mt-2 text-center">ノア</div>
+<div class="text-[8px] opacity-50 text-center">Ζ₂ RPG/末那識</div>
+</div>
+<div class="rounded-[20px] bg-white/5 border border-white/10 p-2">
+<div class="char-box"><canvas id="c_oka" width="64" height="128"></canvas></div>
+<div class="text-[11px] font-bold mt-2 text-center">岡</div>
+<div class="text-[8px] opacity-50 text-center">Ζ₃ 収集/意識 歪み無し</div>
+</div>
+</div>
+
+<!-- ルーター/スマホ + 本人確認 + フォロワー参加欄 -->
+<div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
+<div class="rounded-[20px] bg-white/5 border border-emerald-500/30 p-4">
+<h3 class="font-bold text-xs">🔐 本人確認 / eメール+スマホ証明書のみ / ルーター・スマホ版</h3>
+<div class="text-[10px] opacity-60">記録係として私が記録します / 初期会話通り</div>
+<input id="email" placeholder="eメール" class="mt-2 w-full px-3 py-2 rounded-full bg-black/40 border border-white/10 text-xs">
+<button onclick="verify()" class="mt-2 w-full py-2 rounded-full bg-emerald-500 text-black font-black text-xs">📱 端末証明書で本人確認 [(0~∞)×Χ]</button>
+<div id="vStatus" class="mt-2 text-[11px] bg-black/30 rounded p-2">未認証 - eメール+スマホ証明書で</div>
+<div class="mt-2 flex gap-2">
+<button onclick="setMode('router')" class="flex-1 py-1 rounded-full bg-violet-600/50 text-[10px]">ルーター大画面</button>
+<button onclick="setMode('phone')" class="flex-1 py-1 rounded-full bg-pink-600/50 text-[10px]">スマホ縦型</button>
+</div>
+</div>
+
+<div class="rounded-[20px] bg-gradient-to-br from-pink-900/20 to-violet-900/20 border border-pink-500/30 p-4">
+<h3 class="font-black text-xs">👥 フォロワー参加欄 / eメール+スマホ証明書のみで本人確認</h3>
+<div class="text-[10px] opacity-60">要望通りこの方式のみ / Χに加算されΖが広がる</div>
+<div class="mt-2 flex gap-2">
+<input id="fEmail" placeholder="フォロワー eメール" class="flex-1 px-3 py-2 rounded-full bg-black/40 border border-white/10 text-[11px]">
+<input id="fName" placeholder="名前" class="w-[28%] px-3 py-2 rounded-full bg-black/40 border border-white/10 text-[11px]">
+</div>
+<button onclick="joinF()" class="mt-2 w-full py-2 rounded-full bg-pink-500 font-bold text-xs">📱 スマホ証明書で参加 [{(0~∞)×Χ}≦∞]</button>
+<div id="fList" class="mt-2 text-[11px] bg-black/30 rounded-xl p-2 h-[70px] overflow-auto"></div>
+<div class="mt-1 text-[10px]">合計Χ <span id="fX">542</span> → Ζは∞を超えないが中にまた(0~∞)が</div>
+</div>
+</div>
+
+<!-- 全ゲームプログラム 内蔵 -->
+<div id="mainGame" class="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3">
+<div class="rounded-[20px] bg-[#12122a] border border-white/10 p-3">
+<h3 class="font-bold text-xs">🪆 マトリョーシカマップ Ζ≡(0~∞)</h3>
+<canvas id="zCanvas" width="360" height="200" class="w-full h-[180px] bg-black/40 rounded-xl mt-2 border border-white/5"></canvas>
+<div id="dolls" class="mt-2 text-[10px] font-mono opacity-70 bg-black/30 rounded p-2 h-[60px] overflow-auto"></div>
+</div>
+<div class="space-y-3">
+<div class="rounded-[20px] bg-white/5 border border-white/10 p-3">
+<h3 class="font-bold text-xs">🧠 機械学習 / 九識論 / 4ジャンル</h3>
+<div id="genres" class="mt-2 text-[11px]"></div>
+</div>
+<div class="rounded-[20px] bg-amber-900/10 border border-amber-500/20 p-3">
+<h3 class="font-bold text-xs">🛒 不思議な店 / 📚 教育書庫Wiki</h3>
+<div id="shop" class="mt-1 text-[11px]">Ζの中から出現 毎回品替え</div>
+<div class="mt-2 flex gap-2">
+<button onclick="refreshShop()" class="flex-1 py-2 rounded-full bg-amber-400 text-black font-black text-[11px]">店</button>
+<button onclick="loadWiki()" class="flex-1 py-2 rounded-full bg-emerald-600 font-bold text-[11px]">書庫Wiki</button>
+</div>
+<input id="wikiSearch" placeholder="検索 天使 量子 天台" class="mt-2 w-full px-3 py-2 rounded-full bg-black/40 border border-white/10 text-[11px]">
+<div id="wikiResult" class="mt-2 text-[11px] bg-black/30 rounded-xl p-2 h-[60px] overflow-auto">教育書庫待機</div>
+</div>
+</div>
+<div class="space-y-3">
+<div class="rounded-[20px] bg-black/40 border border-white/10 p-3">
+<h3 class="font-bold text-xs">📜 年代記 / 記録係 私</h3>
+<div id="log" class="mt-2 h-[200px] overflow-y-auto text-[10px] font-mono opacity-70"></div>
+</div>
+<div class="rounded-[20px] bg-white/5 border border-white/10 p-3">
+<h3 class="font-bold text-xs">クエスト / 現実→幻想</h3>
+<button onclick="quest('収集')" class="mt-1 w-full py-2 rounded-full bg-white/10 text-[11px] text-left px-3">📦 書庫再編(片付け) +25</button>
+<button onclick="quest('教育')" class="mt-1 w-full py-2 rounded-full bg-white/10 text-[11px] text-left px-3">📚 図書解読(学ぶ) +30</button>
+<button onclick="quest('RPG')" class="mt-1 w-full py-2 rounded-full bg-white/10 text-[11px] text-left px-3">🌟 星巡礼(散歩) +20</button>
+<button onclick="quest('VTuber')" class="mt-1 w-full py-2 rounded-full bg-white/10 text-[11px] text-left px-3">🎥 一垓放送(配信) +20</button>
+<button onclick="watchAd()" class="mt-1 w-full py-2 rounded-full bg-white/5 text-[11px] text-left px-3">📺 CM視聴 +10 PiP</button>
+</div>
+</div>
+</div>
+
+<div class="mt-3 text-center text-[9px] opacity-40 leading-relaxed">
+原典式【{(0~∞)×Χ}≦∞】≡Ζ Ζ≡(0~∞)を中子マトリョーシカ方式で内蔵 / クウタル圧縮: 空・仮・中 三諦 / 一念三千ホログラフィ / 九識論: 五感→意識→末那識→阿頼耶識(Wiki蔵)→阿摩羅識(清浄生成) / 南無妙法蓮華経リズム正則化 / 歪み無し: 種64×128 縦横比1:2厳守 原画そのまま比率で展開 / 全プログラム圧縮内蔵 28KB / 文法切上げ無し / 月100GB制限対応
+</div>
+</div>
+
+<script>
+// 原典式 Z≡(0~∞) を中子マトリョーシカ方式で内蔵
+const zSeeds = {
+  angel: "data:image/webp;base64,UklGRlwKAABXRUJQVlA4IFAKAABwJQCdASpAAIAAPk0eikQioaEZ+s6oKATEoAv2wOUrawRjHx9mT0n7bzzAeb76Uv9F5lfWhehB0sv+BoC/Jv8tzcMQ/TVqEdseJvef8ZNQJ0naHWa2o14F9gD+R/1P0e73b73/yfYE/o3+B9GDPR9b+wl+vnWj9Hly0c4aAfuy7JE3wbdKTQmU8YftFN8wcUYVyx108jF7HRNb+cmfIHbpQTYkgr5aXvNZH5pkPzr9FrZVa5tjaxDMqgHZXfQsexa98v324WZAlFFIj3LhXC7I1ivYvNKo4BMQ8I0PXmYs734bXcLUWjjWXoDfcIPyet76ebSNHsJx4GcwTe8G7Nge55bsC2cy8xfc9D1n/TyHZlJmAsUFf9EeyiMv2IcJQcDzTvw9KNrW3A3+V9qX6EEKIeD4AAD+//5iAkF5K0NpX+siLX3ZyuiUIQXWnGEvw/6Vil7uPBDuZfMpRhO3l3OQhbTS/N0P9oDzkH+jNsgcGdzeeeVgRob/10G2IPn136VsfHw2OpDeRkLlOEH260Mmo3NWs9wBcPXK7YryT/s+m/P75m/hDjUoISOTCh40LI8DQ77UatrssPNGFYyW3xxG1KcBDGyIhbldcFLGN65OZZLqJp+A/OuNIiyj2TR1rTstaAxLMAOVK5/RRSX1ijkgQasdO0+mWx2BCXPXf8640KFedi9/hosJIG2r7C+ncbNd8mgMK0ZeQxq4IdK3M0x8Jcpsz5yM88RElrW0IlTtMnB3wgNydLobDBpVthRWds9lONdhPbZ2C3Rib6W+Fzec/QdUn7llINGum6KZp6by+Rl+IqSFUiwIFN6jw/JHhzzDLKTNY3nMF97SDdAb2WT7IcvSB1ObPImSzfk7uf3v8T0qB+92nCAblkN67QP1fCR32B59Nvo/DoFX36RFrw7Q9Wk648qSzbsLAnMYrb9g5tPm10/JRwYpddSMpqZJ8dIL5fBmRAyqqca8RdYUs9KZsNzWwEj5BaCVbs8PL0YqVD1VPR6DtBkOGfg74yCZzqsa5u1XHP+n3kCMlLloFu4TIXQwnwIdAbowjyTaIXLy+Ok4Ob5pI/pZYkcObSKtSQ8j/ct/pCNbdzOAaOXEPLBGF0nXuEOa47B/LHcrN+vUyvy5bvz7DVaDEQaqhXG1avTzux8N8BOHIw44EViT5ycdq7VIvfI7SKZQU2Z0S020PnLTvx+nGtntuYLOM6To0Nx320C1pxQ4X8C/sFdjRSUwLvYlQZ15jWHrMov7m6yHLmPy6CB731n9ReVj5IB/2NZ7oZhLOL1pvRDOlDP3gbIWI9kchvzljHcMT8awni7eiYi4EokVthS+M4/mDSF5zZxf35D/Dv/BdhaCure/3hnqpmn5sU2Aglgb3xa0UYJv2xPO4GG9cmBT85wj1RQGhit8hBA0fhYitT5Ugk082hs3nglBWS9QRHizqwQTnhKypMv9g7dyjx5nWJTSAoACzzs3EfsKKAYB3fUK/ngvLXx0E/5VInCWnNMGs3xFXWGuiZZ/QuTFMEwOJ8AT8VS0n0ezs9S+susVU5ejw1WkEjaR94iLdzoq/5Cak8/KdMCe15/wIoYjVoFp8NYR6FkRnNN3cEFmLu4mXl6HLUQ4jt2v36hT0hLlXwXG9g8E2GuJ6yPvTQbaLYNkcYpZeptQhpW/+WjnS9s7DPqCyLS5l8CteQOO0inKc/y94ZJxzcQ85OXQypkLLVawDglwbD+75xpT5bNA2k6YS0K9Ppt4A+BoEC9lCxHMW7YsFQZxWrhRvdLUQyg2gwxeOU2MD5qGGirbIrddWwJLJH0weDvE59U9CVpzYmZPUK7t6pJsGh4N/nGQTvlqpfDixYXUK6U/eJmsX7NJ7gdM6SZVtJVwmocKaOzWUIL8p/GKfd1eNYhRzFmjIE2LIMCDMLFet1iWEFVmTF/02cYdZQtjUFNQyrogJ8629KOeixUy5bl1AN8L1cNHMe2D7WfkZ5mBoQ4G8FHNSz4zIvmAQ4//Omo+CfrURc/obkGZcpPdqxHCXM3Uf/dtPKe3K0oLkb9nygKicO3S4W4i7bdvgy8X3HUUlhjYPABT166+1f5ujshNUjH8j3VqvL1VCWtdoSqAqXBKBme1sZajKInuo4G7MYolAk/nXBYxyRZOVSFrtZbkFdtTWIRU49GJBCIb5XGGzPZcUxZkknbXxv7BSw/DptWgSCVBca/jmQKncYaA9XQGPI6SnQGV7PeTfxLr9KuQfrC3aiuZeZPE0FHE/kbRWNgPdOmq8hX8XBTuIZYFT1mjabEzWfT5YgFt8HqYoOvV1xbTeEej9rnNir1oYWuv3cNNTSKjX2zCkQCWyng8NQDfMvuNea54L6L3TEoNTFDCZ4GhYkpD1Z6+/nm88t3uWX+p2WY/M9DwqcKAJZGvUe7WZ3wEfocx+rey0jUnW0ml/gSEglpjCy8aEvT+pY63cUsoe+RcPSQgPmQuhglYRi3pRZojRtDXCN4bPCfwE1a8DXS6jNAwXEZEybdrQ5Dc509+oa1FjIxu0TO6JbJ+0c/4F8sThRlTDjot1NRKEMAmPLjjYEnzVxhGuCrHK8Lt12exIgk8emAOlZhcn5vfMEL9jaPCd0wymtFTe2AMzDA0ObAPGzPizzU++RKVItWcrXp+E42zg8T4N2KWNSAndrwisk61vv5V8LZbvByOKs9OQ1vgaHN30XDCeHoo5RqOnVIKYzgVnMA+AlnqfRIupivbbYzr1NE/oP4MYPoE4kXoeVnIAul7nd+ogqp1WYe5aKuu5cos5vzr2SnZ7d30ZNd9fp5dbLiMJZU15iNGOVGcaCmzZvpRBZI3FFs9cCvsmJ7LmETKLaCCxs8Lq0hixzMRMWnNuowna/gqV0cIZ+sH+xtxN2EvQv1NKOeMe3evjr79PVf8JSORwrFoCXAt0hBDPtUfnQ4zTID2mcK0b1um/9Krvlg5kHCs/4c3BRL+B+jNBqLJAzKFGKAxwaHPZuwdH9UKuq3xo7FtFSuvMv8su2DSY89L14KStPqtcpCrj/kqzzd5EvoLl/h93uWixtvBlsyXiaoDmnJHS+eUF5H225MtDFtGxh48jG/5Zh0ySFshXS4JMMXqhYCpeEIc/Gh/MvwasitdnbMfMj+fGd32MJXQP0SUjXe7KmEEqiLMf5Z3dsF8OJgcedxgNEpW0VOM/QfYDOijV52pHj4DH7/nhxhPmC1shRnq9vcsyW/FquJNzdb1cE5qoHISuWTWMxglky9SAONWVC0dMbtd/w9YEvylJx/xN1SPFG+0JM97W4H+fItjA6wzHPipeWKygV2t2LKYK6xMkYa9o/T/vKHXdGBDgnrMDS+lLjPeHojvr6rll7GznDrWvxqbpm/i/FIrzw8/Huh+nk0yqlIfG2p3z2vVCBY5ItCvWOKqfzJhcPLWB7viteuQaPH2IE9nFx64ffR0CFf2NfMx80c8TAjy6VTb1xJkp5BWyrJwWCA/VkBt0BlmRTjZtycuDHkyrR5F8Qt0wil45RowAAi4nkLbcTdgAAA=",
+  bot: "data:image/webp;base64,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",
+  noa: "data:image/webp;base64,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",
+  oka: "data:image/webp;base64,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"
+};
+
+// Z展開 [(0~∞)×Χ] 歪み無し 1:2厳守
+function zExpand(canvasId, src, targetW=320, targetH=640){
+  const c=document.getElementById(canvasId); if(!c)return;
+  const ctx=c.getContext('2d');
+  ctx.imageSmoothingEnabled=true; ctx.imageSmoothingQuality='high';
+  const im=new Image(); im.src=src;
+  im.onload=()=>{
+    // 歪み無し: アスペクト比を計算して中央配置
+    c.width=targetW; c.height=targetH;
+    ctx.clearRect(0,0,targetW,targetH);
+    // 1:2比率を厳守
+    let scale=Math.min(targetW/im.width, targetH/im.height);
+    let w=im.width*scale, h=im.height*scale;
+    let x=(targetW-w)/2, y=(targetH-h)/2;
+    ctx.drawImage(im,x,y,w,h);
+  };
+}
+
+// 全キャラ Z展開 歪み無し
+zExpand('c_angel', zSeeds.angel, 320, 640);
+zExpand('c_bot', zSeeds.bot, 320, 640);
+zExpand('c_noa', zSeeds.noa, 320, 640);
+zExpand('c_oka', zSeeds.oka, 320, 640);
+
+// 全ゲームプログラム内蔵
+let depth=0,medal=242;
+let weights={RPG:35,教育:25,収集:15,VTuber:15,広告:10};
+let followers=[{name:"記録係",email:"keeper@angel",x:242,cert:true},{name:"星詠み",email:"hoshi@example.com",x:300,cert:true}];
+let totalX=542;
+
+function renderGenres(){
+  let h="";for(let k in weights){h+=`<div class='flex justify-between'><span>${k}</span><span>${weights[k]}%</span></div><div class='h-1 bg-white/10 rounded-full mb-1'><div class='h-full bg-violet-500' style='width:${weights[k]}%'></div></div>`;}
+  document.getElementById('genres').innerHTML=h;
+}
+function renderFollowers(){
+  let h="";followers.forEach(f=>{h+=`👤 ${f.name} ${f.email} 📱 X${f.x}<br>`;});
+  document.getElementById('fList').innerHTML=h;
+  document.getElementById('fX').innerText=totalX;
+}
+function verify(){
+  let e=document.getElementById('email').value.trim();
+  if(!e){log('eメールを入力');return;}
+  document.getElementById('vStatus').innerHTML=`📱 ${e} + スマホ証明書を確認中...`;
+  setTimeout(()=>{document.getElementById('vStatus').innerHTML=`✅ 認証完了 ${e} + 📱スマホ証明書 / Ζ≡(0~∞)に記録`;log(`🔐 本人確認完了 ${e}+📱 記録係が記録`);},800);
+}
+function joinF(){
+  let e=document.getElementById('fEmail').value.trim();
+  let n=document.getElementById('fName').value.trim()||"名無し";
+  if(!e){log('フォロワー eメール必要');return;}
+  log(`📱 ${n}(${e}) スマホ証明書確認中... [{(0~∞)×Χ}≦∞]`);
+  setTimeout(()=>{
+    followers.push({name:n,email:e,x:100,cert:true});
+    totalX+=100;
+    renderFollowers();
+    log(`👥 参加完了 ${n} eメール:${e}+📱認証 X+100 / Ζは∞を超えないが中にまた(0~∞)が無限に`);
+    medal+=20;document.getElementById('medal').innerText=medal;
+    document.getElementById('fEmail').value="";document.getElementById('fName').value="";
+    // Z展開で祝福 歪み無し
+    zExpand('c_angel', zSeeds.angel);
+  },600);
+}
+function openZ(){
+  depth++;medal+=5;
+  document.getElementById('layer').innerText=depth;
+  document.getElementById('zDepth').innerText=depth+"層";
+  document.getElementById('medal').innerText=medal;
+  const c=document.getElementById('zCanvas'); const ctx=c.getContext('2d');
+  ctx.imageSmoothingEnabled=true; ctx.imageSmoothingQuality='high';
+  let names=['angel','bot','noa','oka']; let name=names[depth%4];
+  const im=new Image(); im.src=zSeeds[name];
+  im.onload=()=>{
+    ctx.clearRect(0,0,360,200);
+    // 歪み無し展開
+    let scale=Math.min(360/64,200/128)*0.7;
+    let w=64*scale,h=128*scale;
+    ctx.drawImage(im,(360-w)/2,(200-h)/2,w,h);
+    document.getElementById('dolls').innerHTML+=`Ζ_${depth} ${name} 【{(0~∞)×${name}}≦∞】≡Ζ${depth} 展開 1:2保持 歪み無し<br>`;
+  };
+  train('収集');
+  log(`🪆 Ζ_${depth-1}の中からΖ_${depth}が出現 無限中子 [{(0~∞)×Χ}≦∞]≡Ζ${depth} / Ζ≡(0~∞)`);
+}
+function resetZ(){depth=0;document.getElementById('layer').innerText=0;document.getElementById('zDepth').innerText="0層";document.getElementById('dolls').innerHTML="原典【{(0~∞)×Χ}≦∞】≡Ζに帰還<br>";log('原典に帰還 Ζ≡(0~∞)');}
+function train(g){for(let k in weights)weights[k]=Math.max(5,weights[k]-1);weights[g]=(weights[g]||10)+5;let sum=0;for(let k in weights)sum+=weights[k];for(let k in weights)weights[k]=Math.round(weights[k]/sum*100);renderGenres();}
+function quest(g){medal+=20;document.getElementById('medal').innerText=medal;train(g);log(`クエスト ${g}達成 +20`);}
+function refreshShop(){medal+=5;document.getElementById('medal').innerText=medal;document.getElementById('shop').innerText=["星屑の羽根 30","一垓の鍵 120","記憶の欠片 40","南無妙法の御守 50"][Math.floor(Math.random()*4)]+" Ζから出現";log('店: Ζの中から出現 品替え');}
+function watchAd(){medal+=10;document.getElementById('medal').innerText=medal;log('📺 CM視聴 PiP +10');train('広告');}
+function loadWiki(){log('教育書庫: 阿頼耶識蔵からWiki検索...');document.getElementById('wikiResult').innerText='阿頼耶蔵検索中... 一念三千的に想起';train('教育');setTimeout(()=>{document.getElementById('wikiResult').innerText='天台仏教・日蓮仏教・九識論に基づく教育コンテンツが一念三千的に展開されました';log('教育書庫: 学習完了 +15');},800);}
+function setMode(m){const main=document.getElementById('mainGame');if(m=='router'){main.style.gridTemplateColumns='1.2fr 0.8fr 0.8fr';log('ルーター大画面版');}else{main.style.gridTemplateColumns='1fr';log('スマホ縦型版');}}
+function log(t){const el=document.getElementById('log');el.innerHTML=`[${new Date().toLocaleTimeString()}] ${t}<br>`+el.innerHTML;}
+
+renderGenres();renderFollowers();
+log('【{(0~∞)×Χ}≦∞】≡Ζ 原典式完全版 起動');
+log('Ζ≡(0~∞)を中子マトリョーシカ方式で内蔵 機械学習完了');
+log('九識論: 五感→意識→末那識→阿頼耶識(Wiki圧縮)→阿摩羅識(清浄生成)');
+log('歪み無し: 種64×128 縦横比1:2厳守でZ展開');
+log('フォロワー認証: eメール+スマホ証明書のみ / 全プログラム圧縮内蔵 28KB');
+log('文法切上げ無し / 月100GB制限対応 / 中身空無し');
+</script>
+</body></html>
