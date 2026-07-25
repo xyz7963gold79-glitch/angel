@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=3.0, user-scalable=yes">
+<title>Journey of Light - GitHub本格RPG</title>
+<style>
+html,body{margin:0;padding:0;width:100%;height:100%;overflow:auto;background:#0a0e1a;color:#fff;font-family:"Hiragino Kaku Gothic ProN",Meiryo,sans-serif;-webkit-overflow-scrolling:touch}
+#game{width:100%;min-width:320px;max-width:800px;margin:0 auto;background:linear-gradient(180deg,#0f1f3a 0%,#1a3a2a 100%);min-height:100vh;display:flex;flex-direction:column;overflow:auto;box-shadow:0 0 20px rgba(0,0,0,0.5)}
+header{padding:10px 12px;background:rgba(0,0,0,0.7);text-align:center;border-bottom:2px solid #ffd700;position:sticky;top:0;z-index:10}
+h1{margin:0;font-size:18px;letter-spacing:2px;color:#ffd700} .sub{font-size:11px;color:#aaa}
+#stats{display:flex;justify-content:space-around;background:rgba(255,255,255,0.1);padding:6px 4px;border-radius:8px;margin-top:6px;font-size:12px;flex-wrap:wrap;gap:4px}
+#viewWrap{position:relative;width:100%;height:420px;background:#000;overflow:auto;overflow-x:auto;overflow-y:auto;border-top:2px solid #333;border-bottom:2px solid #333}
+canvas{display:block}
+#ui{display:flex;flex-direction:column;gap:6px;padding:8px;background:rgba(0,0,0,0.85)}
+#msgBox{height:120px;overflow:auto;overflow-x:auto;overflow-y:auto;background:rgba(20,20,40,0.95);border:2px solid #ffd700;border-radius:8px;padding:8px;font-size:13px;line-height:1.7;word-break:break-all;white-space:pre-wrap}
+#controls{display:flex;justify-content:space-between;align-items:center;padding:8px;background:rgba(0,0,0,0.9);gap:8px;flex-wrap:wrap}
+.dpad{display:grid;grid-template-columns:56px 56px 56px;grid-template-rows:56px 56px;gap:6px}
+.btn{width:56px;height:56px;background:linear-gradient(#333,#111);border:1px solid #666;border-radius:12px;color:#fff;font-size:20px;display:flex;align-items:center;justify-content:center;user-select:none;touch-action:manipulation;cursor:pointer}
+.btn:active{background:#ff9f43;color:#000}
+.rightBtns{display:flex;flex-direction:column;gap:8px}
+.abtn{width:90px;height:46px;border-radius:12px;border:none;font-weight:bold;font-size:12px;cursor:pointer;color:#fff}
+#actBtn{background:linear-gradient(135deg,#ffd700,#ff8c00);color:#000}
+#menuBtn{background:linear-gradient(135deg,#6a5acd,#4169e1)}
+#saveBtn{background:linear-gradient(135deg,#2ecc71,#27ae60)}
+#titleScreen{position:absolute;top:0;left:0;width:100%;height:100%;background:radial-gradient(ellipse at center,#1a3a6a 0%,#0a0e1a 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:20;text-align:center;padding:20px;box-sizing:border-box;overflow:auto}
+#titleScreen h2{font-size:28px;color:#ffd700;text-shadow:0 0 10px #ffd700;margin:0 0 10px}
+#startBtn{margin-top:20px;padding:14px 32px;font-size:18px;border-radius:24px;border:2px solid #ffd700;background:linear-gradient(135deg,#ffd700,#ff8c00);color:#000;font-weight:bold;cursor:pointer}
+.small{font-size:11px;color:#aaa;margin-top:12px;overflow:auto;white-space:normal;word-break:break-all}
+</style>
+</head>
+<body>
+<div id="game">
+<header>
+<h1>Journey of Light - ひかりの旅</h1>
+<div class="sub">GitHub本格RPG / スマホ・ルーター・縦横スクロール対応 / 完全無料</div>
+<div id="stats"><span>場所:<b id="place">村</b></span><span>Lv<b id="lv">1</b></span><span>友情<b id="yu">0</b></span><span>愛情<b id="ai">0</b></span><span>正義<b id="se">0</b></span><span>所持<b id="item">なし</b></span></div>
+</header>
+<div id="viewWrap">
+<canvas id="cv"></canvas>
+<div id="titleScreen">
+<h2>Journey of Light</h2>
+<p>世界に影が落ちた。<br>あなたの小さな光が、<br>友情と愛情と正義で世界を救う。</p>
+<p style="font-size:13px;color:#ffd700">スマホ：タップで操作<br>PC：矢印キー + Zキー</p>
+<button id="startBtn" onclick="startGame()">冒険を始める</button>
+<div class="small">GitHub Pages対応 / 1ファイル完結 / オフライン動作 / セーブ自動<br>このRPGはウディタのように日本語だけで作られています。<br>縦横スクロール対応なのでルーターの小さい画面でもOK</div>
+</div>
+</div>
+<div id="ui">
+<div id="msgBox">【村の広場】おばあさんや子供たちが困っているようです。話しかけてみましょう。</div>
+<div id="controls">
+<div class="dpad"><div></div><div class="btn" data-d="up">▲</div><div></div><div class="btn" data-d="left">◀</div><div class="btn" data-d="down">▼</div><div class="btn" data-d="right">▶</div></div>
+<div class="rightBtns"><button id="actBtn" class="abtn" onclick="action()">話す/調べる<br>Z</button><button id="menuBtn" class="abtn" onclick="openMenu()">メニュー<br>X</button><button id="saveBtn" class="abtn" onclick="saveGame()">セーブ</button></div>
+</div>
+</div>
+</div>
+<script>
+const cv=document.getElementById('cv'), ctx=cv.getContext('2d'), msgBox=document.getElementById('msgBox');
+let gameStarted=false, mapId=0, player={x:2,y:2,dir:0}, flags={}, inv=[];
+let yu=0,ai=0,se=0;
+const TILE=40;
+const maps={
+0:{name:"村",w:15,h:12,data:[
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,0,0,0,0,0,0,0,0,0,0,0,2,0,1],
+[1,0,0,3,0,0,0,1,1,0,0,0,0,0,1],
+[1,0,0,0,0,0,0,0,0,0,4,0,0,0,1],
+[1,0,0,1,1,1,0,0,0,0,0,0,0,0,1],
+[1,0,0,0,0,0,0,5,0,0,0,1,1,0,1],
+[1,0,6,0,0,0,0,0,0,0,0,0,0,0,1],
+[1,0,0,0,0,1,1,1,0,0,0,0,7,0,1],
+[1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+[1,0,0,0,8,0,0,0,0,0,0,0,0,0,1],
+[1,0,0,0,0,0,0,0,0,0,0,0,0,9,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+]},
+1:{name:"森",w:15,h:12,data:[
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,0,0,10,0,0,1,0,0,0,0,11,0,0,1],
+[1,0,1,1,0,0,1,0,1,1,0,0,0,0,1],
+[1,0,0,0,0,0,0,0,0,0,0,1,0,0,1],
+[1,0,12,0,0,1,1,0,0,13,0,1,0,0,1],
+[1,0,0,0,0,1,0,0,0,0,0,0,0,0,1],
+[1,1,1,0,0,0,0,0,1,1,1,0,0,0,1],
+[1,0,0,0,0,14,0,0,0,0,0,0,15,0,1],
+[1,0,1,0,0,0,0,1,0,0,0,1,0,0,1],
+[1,0,0,0,0,0,0,1,0,0,0,1,0,0,1],
+[1,0,0,16,0,0,0,0,0,0,0,0,0,9,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+]},
+2:{name:"試練の洞窟",w:15,h:12,data:[
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,0,0,0,1,0,0,0,0,0,1,0,0,17,1],
+[1,0,1,0,1,0,1,1,1,0,1,0,1,0,1],
+[1,0,1,0,0,0,0,0,1,0,0,0,1,0,1],
+[1,0,1,1,1,1,0,1,1,1,1,0,1,0,1],
+[1,0,0,0,0,0,0,0,0,18,0,0,1,0,1],
+[1,1,1,1,0,1,1,1,1,1,0,1,1,0,1],
+[1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+[1,0,19,1,1,1,0,1,1,1,1,1,1,0,1],
+[1,0,0,0,0,1,0,0,0,0,0,20,0,0,1],
+[1,0,1,1,0,1,0,1,1,0,1,1,0,9,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+]},
+3:{name:"世界樹",w:15,h:12,data:[
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+[1,0,0,0,0,0,21,0,0,0,0,0,0,0,1],
+[1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+[1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+[1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+[1,0,0,0,0,0,0,7,0,0,0,0,0,0,1],
+[1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+[1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+[1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+[1,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+]},
+};
+const events={
+2:{t:"おばあさん",m:"おお、若者よ。重い荷物を運んでくれてありがとう。あなたがいてくれて助かった。\n\n友情+1 愛情+1",f(){yu+=1;ai+=1;}},
+3:{t:"井戸",m:"井戸の中にキラキラするものがある...「古い鍵」を手に入れた！",f(){inv.push("古い鍵");}},
+4:{t:"泣いてる子",m:"友達と喧嘩しちゃった... 友達になってくれる？\n\n「もちろん！」\n子は笑顔になった。友情+2",f(){yu+=2;}},
+5:{t:"畑の青年",m:"この畑、荒れてしまって... 手伝ってくれる？\nあなたは一緒に草取りをした。\n正義+1 愛情+1",f(){se+=1;ai+=1;}},
+6:{t:"道具屋",m:"いらっしゃい！「ひかりの種」をあげよう。暗い場所で使えるよ。",f(){inv.push("ひかりの種");}},
+7:{t:"村長",m:"おお、君か。森の奥の洞窟に世界樹の危機を救う光があるそうだ。\n森への道を開こう。\n[森への扉が開いた]",f(){maps[0].data[10][13]=0;}},
+8:{t:"本棚",m:"『此有故彼有 此生故彼生』\nあなたがいるから世界があり、世界があるからあなたがいる。\n愛情+1",f(){ai+=1;}},
+9:{t:"旅の扉",m:"次の場所へ行きますか？",door:true},
+10:{t:"森の妖精",m:"よく来たね、人間の子。森は君を試しているよ。\n友情+1",f(){yu+=1;}},
+11:{t:"倒れた木",m:"大きな木が道を塞いでいる。ひかりの種があれば...",f(){if(inv.includes("ひかりの種")){msg("ひかりの種が光り、木がどいた！");maps[1].data[1][11]=0;inv=inv.filter(i=>i!=="ひかりの種");}else msg("何か光るものが必要だ...");}},
+12:{t:"迷子の子",m:"ママとはぐれちゃった... 村まで連れて行って！\nあなたは子を村まで送った。\n愛情+2 正義+1",f(){ai+=2;se+=1;}},
+13:{t:"古い祠",m:"『正義は声高く語って良い』\nそう刻まれている。正義+2",f(){se+=2;}},
+14:{t:"キノコ",m:"光るキノコを見つけた。「癒しの葉」を手に入れた！",f(){inv.push("癒しの葉");}},
+15:{t:"森の長老",m:"洞窟の鍵は、3つの優しさを集めた者に与えよう。\n友情・愛情・正義が3以上あれば...",f(){if(yu>=3&&ai>=3&&se>=3){msg("長老「見事だ。洞窟への鍵を渡そう」\n[洞窟の鍵を手に入れた]");inv.push("洞窟の鍵");}else msg(`まだ足りない。現在 友情${yu} 愛情${ai} 正義${se}`);}},
+16:{t:"洞窟の入口",m:"固い扉がある。洞窟の鍵が必要だ。",f(){if(inv.includes("洞窟の鍵")){msg("鍵が光り、扉が開いた！");maps[1].data[10][3]=0;}else msg("鍵がかかっている...");}},
+17:{t:"闇の像",m:"像が囁く「お前は一人だ...」\nあなたは首を振った「一人じゃない！」\n正義+2",f(){se+=2;}},
+18:{t:"壁の文字",m:"『友情は冒険の宝物』\n友情+1",f(){yu+=1;}},
+19:{t:"宝箱",m:"宝箱だ！「勇気の証」を手に入れた！",f(){inv.push("勇気の証");}},
+20:{t:"試練の番人",m:"勇気の証を持つ者のみ通す...",f(){if(inv.includes("勇気の証")){msg("番人「よく来た。世界樹はもうすぐだ」\n[世界樹への道が開いた]");maps[2].data[10][13]=0;}else msg("何か証が必要だ...");}},
+21:{t:"光の記憶",m:"世界の記憶が流れ込む...\n「ありがとう... あなたが信じてくれたから...」",f(){ai+=1;yu+=1;se+=1;}},
+7:{t:"世界樹",m:"ついに来たのですね。\nあなたの友情、愛情、正義が世界を救いました。\n\nあなたは一人じゃない。\nあなたがいるから世界は優しくなった。\n\n【エンディング】\nひかりの旅は終わり、そして新しい旅が始まる。\n\n友情 愛情 正義をありがとう。\n\nまた会いましょう。",end:true,f(){yu+=5;ai+=5;se+=5;}},
+};
+function msg(t){msgBox.textContent=t; msgBox.scrollTop=0;}
+function update(){
+document.getElementById('place').textContent=maps[mapId].name;
+document.getElementById('lv').textContent=Math.floor((yu+ai+se)/3)+1;
+document.getElementById('yu').textContent=yu;
+document.getElementById('ai').textContent=ai;
+document.getElementById('se').textContent=se;
+document.getElementById('item').textContent=inv.length?inv.join(","):"なし";
+localStorage.setItem('hikari_save',JSON.stringify({mapId,player,yu,ai,se,inv,maps}));
+}
+function draw(){
+const W=800,H=480;
+cv.width=W; cv.height=H; cv.style.width="800px"; cv.style.height="480px";
+const ts=40;
+ctx.fillStyle=mapId==0?"#8ecf8e":mapId==1?"#5a8a4a":mapId==2?"#4a4a6a":"#2a5a8a";
+ctx.fillRect(0,0,W,H);
+const ox=Math.max(0,Math.min((maps[mapId].w*TILE)-W, player.x*TILE - W/2 + TILE/2));
+const oy=Math.max(0,Math.min((maps[mapId].h*TILE)-H, player.y*TILE - H/2 + TILE/2));
+for(let y=0;y<maps[mapId].h;y++)for(let x=0;x<maps[mapId].w;x++){
+ const px=x*TILE - ox, py=y*TILE - oy;
+ if(px<-TILE||px>W||py<-TILE||py>H)continue;
+ const t=maps[mapId].data[y][x];
+ if(t==1){ctx.fillStyle="#3a3a2a";ctx.fillRect(px,py,TILE,TILE);ctx.fillStyle="#5a5a3a";ctx.fillRect(px,py,TILE,4);}
+ else if(t==0){ctx.fillStyle=mapId==2?"#6a6a7a":"#cfeac2";ctx.fillRect(px,py,TILE,TILE);}
+ else {ctx.fillStyle="#fffbe6";ctx.fillRect(px,py,TILE,TILE);ctx.fillStyle="#000";ctx.font="20px serif";ctx.textAlign="center";ctx.fillText({2:"👵",3:"⚪",4:"😢",5:"👨‍🌾",6:"🏪",7:"👨‍🏫",8:"📚",9:"🚪",10:"🧚",11:"🌲",12:"🧒",13:"⛩️",14:"🍄",15:"👴",16:"🚪",17:"🗿",18:"📝",19:"🎁",20:"🛡️",21:"💡",7:"🌳"}[t]||"？",px+TILE/2,py+TILE/2+6);}
+}
+ctx.fillStyle="#ff8c00";ctx.beginPath();ctx.arc(player.x*TILE - ox + TILE/2, player.y*TILE - oy + TILE/2, 14,0,Math.PI*2);ctx.fill();ctx.strokeStyle="#fff";ctx.lineWidth=3;ctx.stroke();
+}
+function tryMove(dx,dy){
+ if(!gameStarted)return;
+ const nx=player.x+dx, ny=player.y+dy;
+ if(nx<0||ny<0||nx>=maps[mapId].w||ny>=maps[mapId].h)return;
+ const t=maps[mapId].data[ny][nx];
+ if(t==1){msg("壁だ。行けない。");return;}
+ player.x=nx; player.y=ny; draw();
+ const ev=events[t];
+ if(ev){ if(ev.door){handleDoor(t);} else {msg(`【${ev.t}】\n${ev.m}`); if(ev.f)ev.f(); if(ev.end){setTimeout(()=>{alert("エンディング：世界は救われた！ありがとう！");},500);} update(); maps[mapId].data[ny][nx]=ev.t=="本棚"||ev.t=="壁の文字"||ev.t=="光の記憶"?t:0; } }
+}
+function handleDoor(t){
+ if(mapId==0 && t==9){mapId=1; player.x=2; player.y=1; msg("【森】に入った。鳥の声が聞こえる。"); }
+ else if(mapId==1 && t==9){mapId=0; player.x=13; player.y=10; msg("【村】に戻った。"); }
+ else if(mapId==1 && t==9 && false){}
+ else if(t==9){ if(mapId==1){mapId=2; player.x=1; player.y=1; msg("【試練の洞窟】に入った。ひんやりする...");} else if(mapId==2){mapId=3; player.x=7; player.y=10; msg("【世界樹】の前に来た。光が溢れている...");} else if(mapId==3){mapId=0; player.x=2; player.y=2; msg("村に戻った。また新しい冒険が始まる。");} else {mapId=0; player.x=2; player.y=2;} }
+ update(); draw();
+}
+function action(){
+ if(!gameStarted)return;
+ const front={x:player.x,y:player.y};
+ const dirs=[[0,-1],[1,0],[0,1],[-1,0]];
+ let found=false;
+ for(let d of dirs){ const nx=front.x+d[0], ny=front.y+d[1]; if(maps[mapId].data[ny]&&maps[mapId].data[ny][nx]>=2){const t=maps[mapId].data[ny][nx]; const ev=events[t]; if(ev){msg(`【${ev.t}】\n${ev.m}`); if(ev.f)ev.f(); update(); found=true; break;}}}
+ if(!found) msg("あたりを調べたが、何もなかった。");
+}
+function openMenu(){msg(`【メニュー】\n現在の場所: ${maps[mapId].name}\n夢Lv: ${Math.floor((yu+ai+se)/3)+1}\n友情:${yu} 愛情:${ai} 正義:${se}\n所持品:${inv.join(",")||"なし"}\n\n目標:\n- 村で3人に話しかける\n- 森で長老に会う\n- 洞窟で勇気の証を手に入れる\n- 世界樹を救う\n\nGitHubでセーブされます。`);}
+function saveGame(){update(); msg("セーブしました！GitHubでも続きから遊べます。");}
+function startGame(){
+ document.getElementById('titleScreen').style.display='none';
+ gameStarted=true;
+ const saved=localStorage.getItem('hikari_save');
+ if(saved){ try{ const s=JSON.parse(saved); if(s.mapId!==undefined){mapId=s.mapId; player=s.player; yu=s.yu; ai=s.ai; se=s.se; inv=s.inv; msg("続きから始めます。"); update(); draw(); return;}}catch(e){}}
+ draw(); update();
+}
+document.querySelectorAll('.btn').forEach(b=>{
+ b.addEventListener('touchstart',e=>{e.preventDefault();const d=b.dataset.d;if(d=='up')tryMove(0,-1);if(d=='down')tryMove(0,1);if(d=='left')tryMove(-1,0);if(d=='right')tryMove(1,0);});
+ b.addEventListener('click',()=>{const d=b.dataset.d;if(d=='up')tryMove(0,-1);if(d=='down')tryMove(0,1);if(d=='left')tryMove(-1,0);if(d=='right')tryMove(1,0);});
+});
+window.addEventListener('keydown',e=>{
+ if(e.key=='ArrowUp')tryMove(0,-1);
+ if(e.key=='ArrowDown')tryMove(0,1);
+ if(e.key=='ArrowLeft')tryMove(-1,0);
+ if(e.key=='ArrowRight')tryMove(1,0);
+ if(e.key=='z'||e.key=='Z'||e.key=='Enter')action();
+ if(e.key=='x'||e.key=='X')openMenu();
+});
+window.addEventListener('resize',()=>{if(gameStarted)draw();});
+</script>
+</body>
+</html>
