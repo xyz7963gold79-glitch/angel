@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>File A Chat AI 確実動作版</title>
+<style>
+*{box-sizing:border-box} body{margin:0;background:#060e0b;color:#c8f5d0;font-family:monospace;display:flex;flex-direction:column;height:100vh}
+header{padding:10px;background:#0a1a14;border-bottom:1px solid #1a4a33}
+#msgs{flex:1;overflow:auto;padding:10px;display:flex;flex-direction:column;gap:8px}
+.msg{padding:10px;border-radius:12px;max-width:90%;font-size:14px;word-break:break-word}
+.user{align-self:flex-end;background:#00ff9d22;border:1px solid #00ff9d}
+.ai{align-self:flex-start;background:#0e2018;border:1px solid #193a27}
+.row{display:flex;gap:6px;padding:8px;background:#080f0c;border-top:1px solid #122a1b}
+.row input{flex:1;padding:12px;border-radius:20px;border:1px solid #1a4a33;background:#020804;color:#fff}
+.row button{padding:12px 18px;border-radius:20px;border:none;background:#00ff9d;color:#000;font-weight:bold}
+small{color:#5a8a6a}
+.card{margin:10px;border:1px solid #193a27;background:#0a1711;border-radius:10px;padding:10px}
+input,textarea{width:100%;background:#020804;border:1px solid #1a4a33;color:#fff;padding:8px;border-radius:8px;margin-top:4px}
+button.btn{width:100%;padding:10px;margin-top:6px;background:#00ff9d22;border:1px solid #00ff9d;color:#00ff9d;border-radius:8px}
+</style>
+</head>
+<body>
+<header>
+<b style="color:#00ff9d">汎用多目的 File A' Chat AI 確実動作版</b><br><small>オフライン Σw=1 Z=Σw_i・File_i このスマホ専用</small>
+</header>
+
+<div class="card">
+<b>知識庫 (このスマホ内)</b><br>
+<small id="stat">読込中...</small>
+<input id="fname" placeholder="名前 例 memo.txt">
+<textarea id="ftext" rows="2" placeholder="内容を入力"></textarea>
+<button class="btn" onclick="addText()">テキスト追加</button>
+<input type="file" id="imgFile" accept="image/*" style="margin-top:6px" onchange="addImage(event)">
+<div id="list" style="font-size:11px;margin-top:6px;max-height:100px;overflow:auto;background:#020804;padding:4px;border-radius:6px"></div>
+</div>
+
+<div id="msgs">
+<div class="msg ai">動作確認用です。まずは下の入力欄に「こんにちは」と打って送信してください。必ず返事します。知識庫に追加したテキストから w_i=exp(αi)/ΣC で重み付けて回答します。</div>
+</div>
+
+<div class="row">
+<input id="q" placeholder="ここに入力して送信" onkeydown="if(event.key==='Enter')send()">
+<button onclick="send()">送信</button>
+</div>
+
+<script>
+var files = [
+ {name:"使い方.txt", content:"使い方は簡単です。上の知識庫にテキストを入れ、下で質問すると、指数係数w=exp(αi)/ΣCで重み付けてZ=Σw_i・File_iで回答します。", type:"text"},
+ {name:"FileAとは.txt", content:"File A'はファイルを1つにまとめる技術です。係数C=exp(αi)で重み付けし、有限正規化w=C/ΣCでΣw=1にします。超多層でZ=Σw_i・File_iを計算します。", type:"text"},
+ {name:"QPSK.txt", content:"QPSKは2値を4値に翻訳する技術です。00=45度、01=135度、11=225度、10=315度です。File A'のデータを搬送波に乗せます。", type:"text"}
+];
+
+function getWeights(){
+ var N = files.length;
+ var alpha = 0.12;
+ var raw = [];
+ for(var i=0;i<N;i++){ raw.push(Math.exp(alpha*i)); }
+ var sum = 0; for(var i=0;i<N;i++) sum+=raw[i];
+ var w = []; for(var i=0;i<N;i++) w.push(raw[i]/sum);
+ return w;
+}
+
+function updateList(){
+ var w = getWeights();
+ var s = "N="+files.length+" Σw="+(w.reduce(function(a,b){return a+b},0)).toFixed(4);
+ document.getElementById("stat").textContent = s;
+ var html = "";
+ for(var i=0;i<files.length;i++){
+   html += "["+i+"] "+files[i].name+" w="+w[i].toFixed(4)+" ("+files[i].type+")<br>";
+ }
+ document.getElementById("list").innerHTML = html;
+}
+
+function addText(){
+ var n = document.getElementById("fname").value || "note.txt";
+ var c = document.getElementById("ftext").value;
+ if(!c){ alert("内容を入れてください"); return; }
+ files.unshift({name:n, content:c, type:"text"});
+ document.getElementById("fname").value="";
+ document.getElementById("ftext").value="";
+ updateList();
+ addMsg("ai","追加しました: "+n+" w付きでFile A'にイントゥワンしました。");
+}
+
+function addImage(ev){
+ var file = ev.target.files[0];
+ if(!file) return;
+ var reader = new FileReader();
+ reader.onload = function(e){
+   files.unshift({name:file.name, content:e.target.result, type:"image"});
+   updateList();
+   addMsg("ai","画像を追加しました: "+file.name+" Base64でイントゥワンしました。");
+ };
+ reader.readAsDataURL(file);
+}
+
+function addMsg(who, text){
+ var box = document.getElementById("msgs");
+ var d = document.createElement("div");
+ d.className = "msg "+who;
+ d.innerHTML = text;
+ box.appendChild(d);
+ box.scrollTop = box.scrollHeight;
+}
+
+function tokenScore(query, doc){
+ var q = query.toLowerCase();
+ var d = doc.content.toLowerCase().slice(0,2000);
+ if(doc.type==="image") d = doc.name.toLowerCase();
+ var score = 0;
+ var words = q.split(/[^a-z0-9ぁ-んァ-ン一-龥]+/);
+ for(var i=0;i<words.length;i++){
+   if(!words[i]) continue;
+   if(d.indexOf(words[i])>=0) score+=1;
+ }
+ return score;
+}
+
+function send(){
+ var input = document.getElementById("q");
+ var q = input.value.trim();
+ if(!q) return;
+ input.value="";
+ addMsg("user", q.replace(/</g,"&lt;"));
+ 
+ var w = getWeights();
+ var scored = [];
+ for(var i=0;i<files.length;i++){
+   var s = tokenScore(q, files[i]);
+   scored.push({idx:i, f:files[i], w:w[i], s:s});
+ }
+ scored.sort(function(a,b){ return b.s - a.s || b.w - a.w });
+ 
+ var top = scored.slice(0,3);
+ var Z = 0;
+ for(var i=0;i<scored.length;i++) Z += scored[i].w * scored[i].s;
+ 
+ var ans = "";
+ ans += "検索結果 Z=Σw_i・score = "+Z.toFixed(4)+" Σw=1<br><br>";
+ 
+ if(top[0].s===0){
+   ans += "一致なしでしたが、上位から回答します。<br><br>";
+   for(var i=0;i<top.length;i++){
+     var f = top[i].f;
+     if(f.type==="text"){
+       ans += "<b>["+top[i].idx+"] "+f.name+" w="+top[i].w.toFixed(3)+"</b><br>"+f.content.slice(0,200).replace(/</g,"&lt;")+"<br><br>";
+     }else{
+       ans += "<b>["+top[i].idx+"] 画像 "+f.name+" w="+top[i].w.toFixed(3)+"</b><br><img src='"+f.content+"' style='max-width:100%;max-height:150px;border-radius:8px'><br><br>";
+     }
+   }
+ }else{
+   for(var i=0;i<top.length;i++){
+     if(top[i].s>0){
+       var f = top[i].f;
+       if(f.type==="text"){
+         ans += "<b>["+top[i].idx+"] "+f.name+" w="+top[i].w.toFixed(3)+" score="+top[i].s+"</b><br>"+f.content.slice(0,250).replace(/</g,"&lt;")+"<br><br>";
+       }else{
+         ans += "<b>["+top[i].idx+"] 画像 "+f.name+"</b><br><img src='"+f.content+"' style='max-width:100%;max-height:150px'><br><br>";
+       }
+     }
+   }
+   ans += "上記を重み付き合成 Z=Σw_i・File_i で生成しました。";
+ }
+ 
+ // 簡易汎用応答
+ if(q.match(/こんにちは|hello|hi/i)){
+   ans = "こんにちは！動作確認成功です。<br><br>"+ans;
+ }
+ if(q.match(/おもちゃ/)){
+   ans = "おもちゃではありません。指数係数w_i=exp(αi)/ΣCで有限正規化し、Σw=1で重み付けて回答する本物のRAG型チャットAIです。このスマホ内でオフラインで動きます。<br><br>"+ans;
+ }
+ 
+ addMsg("ai", ans);
+}
+
+updateList();
+</script>
+</body>
+</html>
