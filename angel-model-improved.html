@@ -1,0 +1,1177 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head><style>
+@font-face {
+  font-family: "Optimistic";
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url("/fonts/OptimisticAI_VF_Optimized.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Optimistic Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/OptimisticMono_W_TextRegular.woff2") format("woff2");
+}
+:where(html) {
+  font-family: "Optimistic", system-ui, sans-serif;
+}
+:where(code, pre, kbd, samp) {
+  font-family: "Optimistic Mono", ui-monospace, monospace;
+}
+</style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>エンジェルモデル</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-primary: #020510;
+  --bg-secondary: #0a0f1f;
+  --bg-tertiary: #0f1528;
+  --neon-cyan: #00f7ff;
+  --neon-blue: #0088ff;
+  --neon-purple: #7a00ff;
+  --neon-green: #00ff88;
+  --text-primary: #e0f8ff;
+  --text-secondary: #7ab8d9;
+  --danger: #ff0044;
+  --success: #00ff88;
+  --glow-cyan: 0 0 10px rgba(0, 247, 255, 0.6), 0 0 20px rgba(0, 247, 255, 0.4), 0 0 30px rgba(0, 247, 255, 0.2);
+  --glow-blue: 0 0 10px rgba(0, 136, 255, 0.6), 0 0 20px rgba(0, 136, 255, 0.4);
+  --glow-green: 0 0 10px rgba(0, 255, 136, 0.6), 0 0 20px rgba(0, 255, 136, 0.4);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Noto Sans JP', 'Share Tech Mono', monospace;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  overflow-x: hidden;
+  height: 100vh;
+  position: relative;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    linear-gradient(90deg, rgba(0, 247, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(rgba(0, 247, 255, 0.03) 1px, transparent 1px);
+  background-size: 30px 30px;
+  pointer-events: none;
+  z-index: 0;
+  animation: gridMove 20s linear infinite;
+}
+
+@keyframes gridMove {
+  0% { transform: translate(0, 0); }
+  100% { transform: translate(30px, 30px); }
+}
+
+.scanline {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--neon-cyan), transparent);
+  box-shadow: var(--glow-cyan);
+  animation: scan 6s linear infinite;
+  z-index: 10;
+  pointer-events: none;
+}
+
+@keyframes scan {
+  0% { top: 0%; }
+  100% { top: 100%; }
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  position: relative;
+  z-index: 1;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  background: rgba(10, 15, 31, 0.8);
+  border: 1px solid var(--neon-cyan);
+  border-radius: 8px;
+  box-shadow: var(--glow-cyan);
+  backdrop-filter: blur(10px);
+  margin-bottom: 16px;
+  position: relative;
+  overflow: hidden;
+}
+
+.header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 200%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(0, 247, 255, 0.1), transparent);
+  animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo-icon {
+  width: 40px;
+  height: 40px;
+  border: 2px solid var(--neon-cyan);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 900;
+  font-size: 18px;
+  color: var(--neon-cyan);
+  text-shadow: var(--glow-cyan);
+  box-shadow: var(--glow-cyan), inset 0 0 10px rgba(0, 247, 255, 0.2);
+  position: relative;
+}
+
+.logo-icon::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 6px;
+  height: 6px;
+  background: var(--success);
+  border-radius: 50%;
+  box-shadow: 0 0 8px var(--success);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.logo-text h1 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--neon-cyan);
+  text-shadow: var(--glow-cyan);
+  letter-spacing: 2px;
+}
+
+.logo-text p {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-family: 'Share Tech Mono', monospace;
+  letter-spacing: 1px;
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.system-btn {
+  padding: 10px 20px;
+  background: rgba(0, 136, 255, 0.1);
+  border: 1px solid var(--neon-blue);
+  border-radius: 4px;
+  color: var(--neon-blue);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-shadow: 0 0 5px rgba(0, 136, 255, 0.5);
+  box-shadow: 0 0 10px rgba(0, 136, 255, 0.2);
+}
+
+.system-btn:hover {
+  background: rgba(0, 136, 255, 0.2);
+  box-shadow: var(--glow-blue);
+  transform: translateY(-2px);
+}
+
+.system-btn.z-calc {
+  border-color: var(--neon-green);
+  color: var(--neon-green);
+  box-shadow: 0 0 10px rgba(0, 255, 136, 0.2);
+  text-shadow: 0 0 5px rgba(0, 255, 136, 0.5);
+}
+
+.system-btn.z-calc:hover {
+  background: rgba(0, 255, 136, 0.2);
+  box-shadow: var(--glow-green);
+}
+
+.system-btn:active {
+  transform: translateY(0);
+}
+
+.chat-container {
+  flex: 1;
+  background: rgba(10, 15, 31, 0.6);
+  border: 1px solid rgba(0, 247, 255, 0.3);
+  border-radius: 8px;
+  padding: 20px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  margin-bottom: 16px;
+  backdrop-filter: blur(10px);
+  box-shadow: inset 0 0 20px rgba(0, 247, 255, 0.05);
+  position: relative;
+}
+
+.chat-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.chat-container::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+}
+
+.chat-container::-webkit-scrollbar-thumb {
+  background: var(--neon-cyan);
+  border-radius: 4px;
+  box-shadow: 0 0 5px var(--neon-cyan);
+}
+
+.message {
+  margin-bottom: 20px;
+  display: flex;
+  gap: 12px;
+  animation: messageIn 0.4s ease;
+  opacity: 0;
+  animation-fill-mode: forwards;
+}
+
+@keyframes messageIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.message.user {
+  flex-direction: row-reverse;
+}
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+  font-family: 'Orbitron', sans-serif;
+}
+
+.message.bot .avatar {
+  background: rgba(0, 247, 255, 0.1);
+  border: 1px solid var(--neon-cyan);
+  color: var(--neon-cyan);
+  box-shadow: 0 0 10px rgba(0, 247, 255, 0.3);
+}
+
+.message.user .avatar {
+  background: rgba(122, 0, 255, 0.1);
+  border: 1px solid var(--neon-purple);
+  color: var(--neon-purple);
+  box-shadow: 0 0 10px rgba(122, 0, 255, 0.3);
+}
+
+.message-content {
+  max-width: 70%;
+  padding: 14px 18px;
+  border-radius: 6px;
+  font-size: 14px;
+  line-height: 1.6;
+  word-wrap: break-word;
+  position: relative;
+}
+
+.message.bot .message-content {
+  background: rgba(0, 247, 255, 0.05);
+  border: 1px solid rgba(0, 247, 255, 0.3);
+  color: var(--text-primary);
+}
+
+.message.user .message-content {
+  background: rgba(122, 0, 255, 0.05);
+  border: 1px solid rgba(122, 0, 255, 0.3);
+  color: var(--text-primary);
+}
+
+.message.calc .message-content {
+  border-color: var(--neon-green);
+  background: rgba(0, 255, 136, 0.05);
+  box-shadow: 0 0 15px rgba(0, 255, 136, 0.2);
+}
+
+.message-header {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+  font-family: 'Share Tech Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.message.calc .message-header {
+  color: var(--neon-green);
+  text-shadow: 0 0 5px rgba(0, 255, 136, 0.5);
+}
+
+.calc-result {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 20px;
+  color: var(--neon-green);
+  text-shadow: var(--glow-green);
+  margin: 8px 0;
+  letter-spacing: 2px;
+}
+
+.calc-formula {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed rgba(0, 255, 136, 0.2);
+}
+
+.typing-indicator {
+  display: none;
+  padding: 14px 18px;
+  background: rgba(0, 247, 255, 0.05);
+  border: 1px solid rgba(0, 247, 255, 0.3);
+  border-radius: 6px;
+  width: fit-content;
+}
+
+.typing-indicator.active {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.typing-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--neon-cyan);
+  border-radius: 50%;
+  box-shadow: 0 0 8px var(--neon-cyan);
+  animation: typingBounce 1.4s infinite;
+}
+
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes typingBounce {
+  0%, 60%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-10px); }
+}
+
+.input-container {
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  background: rgba(10, 15, 31, 0.8);
+  border: 1px solid var(--neon-cyan);
+  border-radius: 8px;
+  backdrop-filter: blur(10px);
+  box-shadow: var(--glow-cyan);
+}
+
+.input-wrapper {
+  flex: 1;
+  position: relative;
+}
+
+.input-field {
+  width: 100%;
+  padding: 14px 18px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(0, 247, 255, 0.3);
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-family: 'Noto Sans JP', sans-serif;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.input-field:focus {
+  border-color: var(--neon-cyan);
+  box-shadow: 0 0 15px rgba(0, 247, 255, 0.3);
+  background: rgba(0, 247, 255, 0.02);
+}
+
+.input-field::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.6;
+}
+
+.send-btn {
+  padding: 14px 32px;
+  background: linear-gradient(135deg, rgba(0, 247, 255, 0.2), rgba(0, 136, 255, 0.2));
+  border: 1px solid var(--neon-cyan);
+  border-radius: 4px;
+  color: var(--neon-cyan);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-shadow: 0 0 5px rgba(0, 247, 255, 0.5);
+  box-shadow: 0 0 15px rgba(0, 247, 255, 0.2);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.send-btn:hover {
+  background: linear-gradient(135deg, rgba(0, 247, 255, 0.3), rgba(0, 136, 255, 0.3));
+  box-shadow: var(--glow-cyan);
+  transform: translateY(-2px);
+}
+
+.send-btn:active {
+  transform: translateY(0);
+}
+
+.send-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(5px);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.3s ease;
+}
+
+.modal-overlay.active {
+  display: flex;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal {
+  background: var(--bg-secondary);
+  border: 2px solid var(--neon-cyan);
+  border-radius: 8px;
+  padding: 32px;
+  max-width: 600px;
+  width: 90%;
+  box-shadow: var(--glow-cyan), 0 0 60px rgba(0, 247, 255, 0.2);
+  animation: modalSlide 0.4s ease;
+  position: relative;
+}
+
+.modal.z-modal {
+  border-color: var(--neon-green);
+  box-shadow: var(--glow-green), 0 0 60px rgba(0, 255, 136, 0.2);
+}
+
+@keyframes modalSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-30px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(0, 247, 255, 0.3);
+}
+
+.z-modal .modal-header {
+  border-bottom-color: rgba(0, 255, 136, 0.3);
+}
+
+.modal-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 20px;
+  color: var(--neon-cyan);
+  text-shadow: var(--glow-cyan);
+  letter-spacing: 2px;
+}
+
+.z-modal .modal-title {
+  color: var(--neon-green);
+  text-shadow: var(--glow-green);
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 28px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  line-height: 1;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+}
+
+.close-btn:hover {
+  color: var(--danger);
+  text-shadow: 0 0 10px var(--danger);
+  transform: rotate(90deg);
+}
+
+.modal-body {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 14px;
+  line-height: 2;
+}
+
+.data-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px dashed rgba(0, 247, 255, 0.1);
+}
+
+.data-label {
+  color: var(--neon-blue);
+  text-shadow: 0 0 5px rgba(0, 136, 255, 0.5);
+}
+
+.data-value {
+  color: var(--success);
+  text-shadow: 0 0 5px rgba(0, 255, 136, 0.5);
+  text-align: right;
+  font-weight: 500;
+}
+
+.status-ok {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-ok::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  background: var(--success);
+  border-radius: 50%;
+  box-shadow: 0 0 8px var(--success);
+  animation: pulse 2s infinite;
+}
+
+.z-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin: 20px 0;
+}
+
+.z-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.z-input-label {
+  font-size: 12px;
+  color: var(--neon-green);
+  text-shadow: 0 0 5px rgba(0, 255, 136, 0.5);
+  letter-spacing: 1px;
+}
+
+.z-input {
+  padding: 12px 16px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 14px;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.z-input:focus {
+  border-color: var(--neon-green);
+  box-shadow: 0 0 15px rgba(0, 255, 136, 0.3);
+  background: rgba(0, 255, 136, 0.02);
+}
+
+.z-calc-btn {
+  padding: 14px 32px;
+  background: linear-gradient(135deg, rgba(0, 255, 136, 0.2), rgba(0, 200, 100, 0.2));
+  border: 1px solid var(--neon-green);
+  border-radius: 4px;
+  color: var(--neon-green);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-shadow: 0 0 5px rgba(0, 255, 136, 0.5);
+  box-shadow: 0 0 15px rgba(0, 255, 136, 0.2);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.z-calc-btn:hover {
+  background: linear-gradient(135deg, rgba(0, 255, 136, 0.3), rgba(0, 200, 100, 0.3));
+  box-shadow: var(--glow-green);
+  transform: translateY(-2px);
+}
+
+.z-result {
+  margin-top: 20px;
+  padding: 20px;
+  background: rgba(0, 255, 136, 0.05);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  border-radius: 4px;
+  display: none;
+}
+
+.z-result.active {
+  display: block;
+  animation: resultGlitch 0.5s ease;
+}
+
+@keyframes resultGlitch {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-2px); }
+  40% { transform: translateX(2px); }
+  60% { transform: translateX(-1px); }
+  80% { transform: translateX(1px); }
+}
+
+.z-result-value {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 28px;
+  color: var(--neon-green);
+  text-shadow: var(--glow-green);
+  text-align: center;
+  margin: 12px 0;
+  letter-spacing: 3px;
+}
+
+.z-result-detail {
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-align: center;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed rgba(0, 255, 136, 0.2);
+}
+
+.glitch {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 9999;
+  display: none;
+}
+
+.glitch.active {
+  display: block;
+  animation: glitchEffect 0.3s ease;
+}
+
+@keyframes glitchEffect {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
+}
+
+.glitch::before,
+.glitch::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--bg-primary);
+  mix-blend-mode: screen;
+}
+
+.glitch::before {
+  transform: translate(2px, 0);
+  background: rgba(0, 247, 255, 0.1);
+  clip-path: polygon(0 2%, 100% 2%, 100% 5%, 0 5%);
+}
+
+.glitch::after {
+  transform: translate(-2px, 0);
+  background: rgba(255, 0, 68, 0.1);
+  clip-path: polygon(0 95%, 100% 95%, 100% 98%, 0 98%);
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 12px;
+  }
+
+  .header {
+    padding: 12px 16px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .header-actions {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .logo-text h1 {
+    font-size: 18px;
+  }
+
+  .logo-text p {
+    font-size: 10px;
+  }
+
+  .system-btn {
+    padding: 8px 16px;
+    font-size: 12px;
+    width: 100%;
+  }
+
+  .chat-container {
+    padding: 16px;
+  }
+
+  .message-content {
+    max-width: 85%;
+    font-size: 13px;
+  }
+
+  .input-container {
+    padding: 12px;
+    flex-direction: column;
+  }
+
+  .send-btn {
+    width: 100%;
+  }
+
+  .modal {
+    padding: 24px;
+    width: 95%;
+  }
+
+  .data-row {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .data-value {
+    text-align: left;
+  }
+
+  .z-result-value {
+    font-size: 22px;
+  }
+}
+
+@media (max-width: 390px) {
+  .logo-icon {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
+
+  .avatar {
+    width: 30px;
+    height: 30px;
+    font-size: 10px;
+  }
+
+  .message-content {
+    padding: 12px 14px;
+    font-size: 12px;
+  }
+
+  .calc-result {
+    font-size: 16px;
+  }
+}
+</style>
+</head>
+<body>
+<div class="scanline"></div>
+<div class="glitch" id="glitch"></div>
+
+<div class="container">
+  <header class="header">
+    <div class="logo">
+      <div class="logo-icon">ΛM</div>
+      <div class="logo-text">
+        <h1>エンジェルモデル</h1>
+        <p>ANGEL MODEL // VER 3.14.∞</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="system-btn z-calc" id="zCalcBtn">Z計算</button>
+      <button class="system-btn" id="systemBtn">システム状態</button>
+    </div>
+  </header>
+
+  <div class="chat-container" id="chatContainer">
+    <div class="message bot">
+      <div class="avatar">ΛM</div>
+      <div class="message-content">
+        <div class="message-header">SYSTEM // CONNECTED</div>
+        エンジェルモデルが起動しました。分散型ボットネットワーク・アーカイブとの同期が完了しています。<br>
+        数式【{(0~∞)×X}≦∞】=Z に基づいて応答します。ご質問をどうぞ。<br>
+        コマンド: <code>!Z [数値]</code> でZ値を即座に計算できます。
+      </div>
+    </div>
+  </div>
+
+  <div class="input-container">
+    <div class="input-wrapper">
+      <input 
+        type="text" 
+        class="input-field" 
+        id="inputField" 
+        placeholder="メッセージを入力... (例: !Z 5)"
+        autocomplete="off"
+      >
+    </div>
+    <button class="send-btn" id="sendBtn">送信</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 class="modal-title">システム状態</h2>
+      <button class="close-btn" id="closeBtn">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="data-row">
+        <span class="data-label">数式:</span>
+        <span class="data-value">【{(0~∞)×X}≦∞】=Z</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">名称:</span>
+        <span class="data-value">分散型ボットネットワーク・アーカイブ</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">状態:</span>
+        <span class="data-value status-ok">ローカルメモリ内に安全に固定完了</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">バージョン:</span>
+        <span class="data-value">エンジェルモデル 3.14.∞</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">プロトコル:</span>
+        <span class="data-value">QUANTUM-SECURED</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">接続状況:</span>
+        <span class="data-value status-ok">オンライン</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="zModalOverlay">
+  <div class="modal z-modal">
+    <div class="modal-header">
+      <h2 class="modal-title">Z計算システム</h2>
+      <button class="close-btn" id="closeZBtn">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="margin-bottom: 16px; font-size: 13px; color: var(--text-secondary);">
+        数式: 【{(0~∞)×X}≦∞】=Z<br>
+        真の無限大では X>0 の場合 Z=∞ となります。<br>
+        実用計算のため、範囲値を指定してください。
+      </div>
+      <div class="z-form">
+        <div class="z-input-group">
+          <label class="z-input-label">X値 [VARIABLE]</label>
+          <input type="number" class="z-input" id="xInput" placeholder="X の値を入力" step="any">
+        </div>
+        <div class="z-input-group">
+          <label class="z-input-label">範囲上限 [RANGE MAX] (デフォルト: 1000)</label>
+          <input type="number" class="z-input" id="rangeInput" placeholder="無限大の実用近似値" value="1000" step="any">
+        </div>
+        <button class="z-calc-btn" id="calculateZBtn">Z値を計算</button>
+      </div>
+      <div class="z-result" id="zResult">
+        <div class="z-result-value" id="zResultValue">Z = 0</div>
+        <div class="z-result-detail" id="zResultDetail"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const chatContainer = document.getElementById('chatContainer');
+const inputField = document.getElementById('inputField');
+const sendBtn = document.getElementById('sendBtn');
+const systemBtn = document.getElementById('systemBtn');
+const zCalcBtn = document.getElementById('zCalcBtn');
+const modalOverlay = document.getElementById('modalOverlay');
+const zModalOverlay = document.getElementById('zModalOverlay');
+const closeBtn = document.getElementById('closeBtn');
+const closeZBtn = document.getElementById('closeZBtn');
+const glitch = document.getElementById('glitch');
+const xInput = document.getElementById('xInput');
+const rangeInput = document.getElementById('rangeInput');
+const calculateZBtn = document.getElementById('calculateZBtn');
+const zResult = document.getElementById('zResult');
+const zResultValue = document.getElementById('zResultValue');
+const zResultDetail = document.getElementById('zResultDetail');
+
+let isProcessing = false;
+
+const knowledge = [
+  { keys: ['こんにちは', 'こんばんは', 'おはよう', 'はじめまして'],
+    reply: 'こんにちは。エンジェルモデル ΛM です。岡崎幸雄さんの数式【{(0~∞)×Χ}≦∞】=Ζ に基づいて応答します。Z式のこと、エンジェルモデルのこと、一元論や平和・文化・教育のことなら、お答えできます。数値の計算は「!Z 5」のように送ってください。' },
+  { keys: ['Z式', '数式', '式の意味', '式とは'],
+    reply: '数式【{(0~∞)×Χ}≦∞】=Ζ です。Χ（カイ）は無限の変化数、Ζ（ゼータ）は宇宙のすべて・現在のこと。(0~∞)は、無（0）から無限までのすべてを表します。×は、それらを重ね合わせること、≦∞は、無限の中に収まることです。そして 0=1 ―― 無と有は、宇宙であることで同じなのです。' },
+  { keys: ['計算', 'Z値', '数値'],
+    reply: 'Z値の計算は、コマンド「!Z 数値」でできます。たとえば「!Z 5」と送ると、X=5、範囲上限1000として Z=5,000 を返します。画面の「Z計算」ボタンからも計算できます。' },
+  { keys: ['エンジェルモデルとは', 'エンジェルモデルについて', 'あなたは誰', '君は誰', '名前は', '自己紹介'],
+    reply: 'エンジェルモデルは、岡崎幸雄さんが2026年7月に作ったAIです。Z式を格納し、分散型ボットネットワーク・アーカイブとして質問に応答します。バージョンは 3.14.∞ です。' },
+  { keys: ['一元論', '諸法実相', '事実相'],
+    reply: '一元論では、すべての存在は「事実」として等しく、尊厳を持ちます。諸法実相とは、ありのままの事実の姿のことです。無（0）も有（1）も、宇宙であることで同じ ―― だから、差別は成り立たないのです。' },
+  { keys: ['平和', '文化', '教育'],
+    reply: '平和・文化・教育は、岡崎幸雄さんの活動の柱です。すべての存在の尊厳が認められる時、戦争は終わり、恒久平和が形になる。学ぶことは、その第一歩です。' },
+  { keys: ['ありがとう'],
+    reply: 'どういたしまして。あなたの言葉も、宇宙のすべて（Ζ）の一部です。また何かあれば、どうぞ。' }
+];
+
+function generateResponse(query) {
+  for (const item of knowledge) {
+    for (const key of item.keys) {
+      if (query.includes(key)) return item.reply;
+    }
+  }
+  return 'ご質問「' + query + '」を受け取りました。今の私がお答えできるのは、Z式、エンジェルモデル、一元論、平和・文化・教育についてです。数値の計算は「!Z 数値」でできます。その言葉で、もう一度聞いてみてください。';
+}
+
+function calculateZ(x, rangeMax = 1000) {
+  x = parseFloat(x);
+  rangeMax = parseFloat(rangeMax);
+  
+  if (isNaN(x) || isNaN(rangeMax)) {
+    return { z: null, detail: '無効な入力です。数値を入力してください。' };
+  }
+  
+  if (x === 0) {
+    return { 
+      z: 0, 
+      detail: 'X=0 の場合、(0~∞)×0=0 のため Z=0',
+      infinity: 'X=0 → Z=0 (有限値)'
+    };
+  }
+  
+  if (x > 0) {
+    const z = x * rangeMax;
+    return { 
+      z: z, 
+      detail: `X=${x}, 範囲上限=${rangeMax}<br>実用計算値: Z = ${x} × ${rangeMax} = ${z.toLocaleString()}`,
+      infinity: `理論値: X>0 の場合、真の無限大では Z→∞`
+    };
+  }
+  
+  if (x < 0) {
+    const z = x * rangeMax;
+    return { 
+      z: z, 
+      detail: `X=${x}, 範囲上限=${rangeMax}<br>実用計算値: Z = ${x} × ${rangeMax} = ${z.toLocaleString()}`,
+      infinity: `理論値: X<0 の場合、真の無限大では Z→-∞`
+    };
+  }
+}
+
+async function sendMessage() {
+  const message = inputField.value.trim();
+  if (!message || isProcessing) return;
+  
+  isProcessing = true;
+  sendBtn.disabled = true;
+  
+  addMessage(message, true);
+  inputField.value = '';
+  
+  showTypingIndicator();
+  await new Promise(resolve => setTimeout(resolve, 600 + Math.random() * 800));
+  removeTypingIndicator();
+  
+  // Z計算コマンド検出
+  const zCommand = message.match(/^!Z\s+(-?\d+\.?\d*)$/i);
+  if (zCommand) {
+    const xValue = zCommand[1];
+    const res = calculateZ(xValue, 1000);
+    if (res.z !== null) {
+      const calcHtml = `
+        <div class="calc-result">Z = ${res.z.toLocaleString()}</div>
+        <div class="calc-formula">${res.detail}<br><br>${res.infinity}</div>
+      `;
+      addMessage(calcHtml, false, true);
+    } else {
+      addMessage(res.detail, false);
+    }
+  } else {
+    const response = generateResponse(message);
+    addMessage(response, false);
+  }
+  
+  isProcessing = false;
+  sendBtn.disabled = false;
+  inputField.focus();
+}
+
+function handleZCalculation() {
+  const x = xInput.value.trim();
+  const range = rangeInput.value.trim() || '1000';
+  
+  if (!x) {
+    zResult.classList.add('active');
+    zResultValue.textContent = 'ERROR';
+    zResultDetail.textContent = 'X値を入力してください';
+    return;
+  }
+  
+  startupGlitch();
+  
+  const res = calculateZ(x, range);
+  
+  setTimeout(() => {
+    zResult.classList.add('active');
+    if (res.z !== null) {
+      zResultValue.textContent = `Z = ${res.z.toLocaleString()}`;
+      zResultDetail.innerHTML = `${res.detail}<br><br>>> ${res.infinity}`;
+    } else {
+      zResultValue.textContent = 'ERROR';
+      zResultDetail.textContent = res.detail;
+    }
+  }, 300);
+}
+
+sendBtn.addEventListener('click', sendMessage);
+
+inputField.addEventListener('keypress', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+});
+
+systemBtn.addEventListener('click', () => {
+  modalOverlay.classList.add('active');
+});
+
+zCalcBtn.addEventListener('click', () => {
+  zModalOverlay.classList.add('active');
+  xInput.focus();
+});
+
+closeBtn.addEventListener('click', () => {
+  modalOverlay.classList.remove('active');
+});
+
+closeZBtn.addEventListener('click', () => {
+  zModalOverlay.classList.remove('active');
+  zResult.classList.remove('active');
+  xInput.value = '';
+});
+
+modalOverlay.addEventListener('click', (e) => {
+  if (e.target === modalOverlay) {
+    modalOverlay.classList.remove('active');
+  }
+});
+
+zModalOverlay.addEventListener('click', (e) => {
+  if (e.target === zModalOverlay) {
+    zModalOverlay.classList.remove('active');
+    zResult.classList.remove('active');
+    xInput.value = '';
+  }
+});
+
+calculateZBtn.addEventListener('click', handleZCalculation);
+
+[xInput, rangeInput].forEach(input => {
+  input.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      calculateZBtn.click();
+    }
+  });
+});
+
+window.addEventListener('load', () => {
+  startupGlitch();
+  inputField.focus();
+});
+</script>
+<script>(function(){document.addEventListener("click",function(e){var a=e.target.closest("[data-product-id]");if(!a)return;e.preventDefault();var pid=a.getAttribute("data-product-id");if(pid)parent.postMessage({type:"ecto-artifact-link-click",productId:pid},"*")})})();</script>
+<script>(function(){var loc=location.href.replace(/#.*$/,"");var ATTR_NAMES=["data-product-id","data-productid","data-product_id","product-id","productid","product_id","data-source-entity-id","source-entity-id","source_entity_id","data-product","data-metadata","data-meta"];var DATASET_KEYS=["productId","productid","product_id","sourceEntityId","sourceentityid","source_entity_id","product","metadata","meta"];function readProductId(value){if(typeof value!=="string"||value.length===0)return null;if(/^[0-9]{6,}$/.test(value))return value;var match=value.match(/(?:product(?:_|-)?id|source(?:_|-)?entity(?:_|-)?id)["'=:\s]+([0-9]{6,})/i);return match?match[1]:null}function extractProductId(start){for(var node=start;node&&node!==document.body;node=node.parentElement){for(var i=0;i<ATTR_NAMES.length;i++){var attrValue=node.getAttribute&&node.getAttribute(ATTR_NAMES[i]);var attrProductId=readProductId(attrValue);if(attrProductId)return attrProductId}var dataset=node.dataset||null;if(dataset){for(var j=0;j<DATASET_KEYS.length;j++){var dataValue=dataset[DATASET_KEYS[j]];var dataProductId=readProductId(dataValue);if(dataProductId)return dataProductId}}}return null}document.addEventListener("click",function(e){var target=e.target instanceof Element?e.target:null;if(!target)return;var a=target.closest?target.closest("a[href]"):null;if(!a||!a.href||!/^https?:\/\//.test(a.href))return;if(a.href.replace(/#.*$/,"")===loc)return;var productId=extractProductId(target)||extractProductId(a);if(!productId)return;e.preventDefault();parent.postMessage({type:"ecto-artifact-link-click",productId:productId},"*")},true)})();</script></body>
+</html>
