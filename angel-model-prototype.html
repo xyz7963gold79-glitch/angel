@@ -1006,6 +1006,66 @@ const knowledge = [
     reply: 'どういたしまして。あなたの言葉も、宇宙のすべて（Ζ）の一部です。また何かあれば、どうぞ。' }
 ];
 
+function startupGlitch() {
+  glitch.classList.add('active');
+  setTimeout(() => {
+    glitch.classList.remove('active');
+  }, 300);
+}
+
+function addMessage(content, isUser = false, isCalc = false) {
+  const messageDiv = document.createElement('div');
+  messageDiv.className = `message ${isUser ? 'user' : 'bot'} ${isCalc ? 'calc' : ''}`;
+  
+  const avatar = document.createElement('div');
+  avatar.className = 'avatar';
+  avatar.textContent = isUser ? 'USER' : 'ΛM';
+  
+  const messageContent = document.createElement('div');
+  messageContent.className = 'message-content';
+  
+  if (!isUser) {
+    const header = document.createElement('div');
+    header.className = 'message-header';
+    header.textContent = isCalc ? 'Z-CALC // RESULT' : 'ANGEL MODEL // RESPONSE';
+    messageContent.appendChild(header);
+  }
+  
+  const textNode = document.createElement('div');
+  textNode.innerHTML = content;
+  messageContent.appendChild(textNode);
+  
+  messageDiv.appendChild(avatar);
+  messageDiv.appendChild(messageContent);
+  
+  chatContainer.appendChild(messageDiv);
+  chatContainer.scrollTop = chatContainer.scrollHeight;
+}
+
+function showTypingIndicator() {
+  const typingDiv = document.createElement('div');
+  typingDiv.className = 'message bot';
+  typingDiv.id = 'typingIndicator';
+  
+  const avatar = document.createElement('div');
+  avatar.className = 'avatar';
+  avatar.textContent = 'ΛM';
+  
+  const indicator = document.createElement('div');
+  indicator.className = 'typing-indicator active';
+  indicator.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+  
+  typingDiv.appendChild(avatar);
+  typingDiv.appendChild(indicator);
+  chatContainer.appendChild(typingDiv);
+  chatContainer.scrollTop = chatContainer.scrollHeight;
+}
+
+function removeTypingIndicator() {
+  const indicator = document.getElementById('typingIndicator');
+  if (indicator) indicator.remove();
+}
+
 function generateResponse(query) {
   for (const item of knowledge) {
     for (const key of item.keys) {
