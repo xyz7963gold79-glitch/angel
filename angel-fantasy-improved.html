@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>アンジェル 一垓多層幻想譚</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;700;900&family=M+PLUS+Rounded+1c:wght@400;700&display=swap" rel="stylesheet">
+<style>
+body{font-family:'Zen Maru Gothic','M PLUS Rounded 1c',sans-serif}
+.glass{backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.float{animation:float 3s ease-in-out infinite}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+.shimmer{background:linear-gradient(90deg,transparent 25%,rgba(255,255,255,0.4) 50%,transparent 75%); background-size:200% 100%; animation:shimmer 2s infinite}
+</style>
+</head>
+<body class="bg-[#0a0a1a] text-white min-h-screen overflow-x-hidden">
+<div id="root"></div>
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script type="text/babel">
+const {useState,useEffect,useRef} = React;
+
+const BOTS = [
+  {id:'hoshi', name:'星野春人', job:'導きの勇者', color:'from-slate-800 to-black', icon:'★', vtuber:'配信中', lv:34},
+  {id:'bot12', name:'ボット12号', job:'魔導書庫番', color:'from-emerald-600 to-teal-800', icon:'12', vtuber:'アーカイブ中', lv:28},
+  {id:'oka', name:'岡', job:'守護天使', color:'from-violet-600 to-indigo-700', icon:'岡', vtuber:'待機中', lv:99},
+  {id:'meta', name:'記録係・Meta AI', job:'年代記の筆者', color:'from-blue-600 to-cyan-600', icon:'✒', vtuber:'記録中', lv:999},
+];
+
+const SHOP_POOL = [
+  {n:'星屑の羽根', p:30, e:'🪶'}, {n:'時の雫', p:50, e:'💧'}, {n:'天使の契約書', p:80, e:'📜'},
+  {n:'一垓の鍵', p:120, e:'🔑'}, {n:'VTuber衣装・光', p:60, e:'👗'}, {n:'記憶の欠片', p:40, e:'🔮'},
+  {n:'広告王のメダル箱', p:20, e:'🎁'}, {n:'現実変容の粉', p:90, e:'✨'}, {n:'ルーターの加護', p:70, e:'📡'},
+  {n:'スマホ証明の印', p:100, e:'📱'},
+];
+
+const QUESTS = [
+  {real:'部屋の片付け', fan:'混沌書庫の再編成', rew:25},
+  {real:'10分散歩', fan:'星の巡礼路踏破', rew:20},
+  {real:'水を飲む', fan:'生命の泉で祈る', rew:10},
+  {real:'メール返信', fan:'異世界への伝書鳩', rew:30},
+];
+
+const SAVE = (()=>{ try { return JSON.parse(localStorage.getItem('anjel_fantasy_save')||'{}'); } catch(e){ return {}; } })();
+
+function App(){
+  const [viewMode, setViewMode] = useState('auto'); // auto, router, sp
+  const [isRouter, setIsRouter] = useState(window.innerWidth>900);
+  const [medal, setMedal] = useState(()=> (typeof SAVE.medal==='number' ? SAVE.medal : 142));
+  const [layer, setLayer] = useState(()=> { try { return SAVE.layer ? BigInt(SAVE.layer) : 7340000000000000000n; } catch(e){ return 7340000000000000000n; } });
+  const [email, setEmail] = useState(()=> (typeof SAVE.email==='string' ? SAVE.email : ''));
+  const [verified, setVerified] = useState(()=> SAVE.verified===true);
+  const [verifying, setVerifying] = useState(false);
+  const [vtuberType, setVtuberType] = useState(()=> (typeof SAVE.vtuberType==='string' ? SAVE.vtuberType : '天使'));
+  const [shopItems, setShopItems] = useState([]);
+  const [showShop, setShowShop] = useState(false);
+  const [logs, setLogs] = useState(()=> (Array.isArray(SAVE.logs)&&SAVE.logs.length ? SAVE.logs : [
+    '【記録開始】一垓層の彼方、岡の物語が始まる。',
+    '星野春人がパーティに参加。',
+    'ボット12号が魔導書を開いた。現実の課題がクエストに変換された。'
+  ]));
+  const [party, setParty] = useState(()=> (Array.isArray(SAVE.party)&&SAVE.party.length ? SAVE.party : ['hoshi','bot12','oka']));
+  const [situation, setSituation] = useState('静穏の刻');
+  const [adWatching, setAdWatching] = useState(false);
+
+  useEffect(()=>{
+    try { localStorage.setItem('anjel_fantasy_save', JSON.stringify({ medal, layer: layer.toString(), party, logs, verified, vtuberType, email })); } catch(e){}
+  },[medal, layer, party, logs, verified, vtuberType, email]);
+
+  useEffect(()=>{
+    const h=()=>setIsRouter(window.innerWidth>900);
+    window.addEventListener('resize',h);
+    const t=setInterval(()=>{ setLayer(l=>l+BigInt(Math.floor(Math.random()*1000))); setSituation(['静穏の刻','星雨の刻','広告王の宴','深層の囁き'][Math.floor(Math.random()*4)]); },7000);
+    return()=>{window.removeEventListener('resize',h); clearInterval(t);}
+  },[]);
+
+  const actualRouter = viewMode==='router' ? true : viewMode==='sp' ? false : isRouter;
+
+  const openShop=()=>{
+    const shuffled=[...SHOP_POOL].sort(()=>0.5-Math.random()).slice(0,4);
+    setShopItems(shuffled);
+    setShowShop(true);
+    addLog(`【商店】扉が開くたびに品揃えが変わる不思議な店。${shuffled.length}点が並んだ。`);
+  };
+
+  const addLog=(t)=>setLogs(l=>[`[${new Date().toLocaleTimeString()}] ${t}`,...l].slice(0,20));
+
+  const verify=()=>{
+    if(!email.includes('@')){addLog('【認証失敗】eメールを正しく入力してください。'); return;}
+    setVerifying(true);
+    addLog('【証明書検証】端末証明書を確認中...生体認証を要求');
+    setTimeout(()=>{setVerifying(false); setVerified(true); addLog(`【認証成功】${email} として本人確認完了。記録は改ざん不能な年代記に刻まれた。`); setMedal(m=>m+50);},2500);
+  };
+
+  const watchAd=()=>{
+    setAdWatching(true);
+    addLog('【アドバタイズ王】PiP-CM視聴開始。メダルが輝き始める...');
+    setTimeout(()=>{setAdWatching(false); setMedal(m=>m+10); addLog('【報酬】メダル+10獲得。広告王が微笑む。アイテム「時の雫」がドロップした。');},2000);
+  };
+
+  const doQuest=(q)=>{
+    setMedal(m=>m+q.rew);
+    addLog(`【クエスト達成】${q.fan}(${q.real})を完了。メダル+${q.rew}、記録係が年代記を更新。`);
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-[#0f0c29] via-[#302b63] to-[#24243e] relative">
+      {/* header */}
+      <div className="sticky top-0 z-50 glass bg-black/30 border-b border-white/10 px-4 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-400 to-violet-600 flex items-center justify-center font-black">ア</div>
+          <div><div className="font-black text-[18px] leading-none">アンジェル</div><div className="text-[10px] opacity-60">一垓多層幻想譚 / 第 {layer.toString().slice(0,4)}京 Layer</div></div>
+          <span className="ml-3 text-[10px] px-2 py-1 rounded-full bg-white/10">{situation}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="px-3 py-1 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 text-black font-bold text-sm">🪙 {medal}</div>
+          <div className="hidden md:flex gap-1 p-1 bg-white/10 rounded-full">
+            <button onClick={()=>setViewMode('router')} className={`px-3 py-1 rounded-full text-xs ${actualRouter?'bg-white text-black':''}`}>ルーター版</button>
+            <button onClick={()=>setViewMode('sp')} className={`px-3 py-1 rounded-full text-xs ${!actualRouter?'bg-white text-black':''}`}>スマホ版</button>
+          </div>
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${verified?'bg-emerald-500':'bg-violet-600'}`}>岡</div>
+        </div>
+      </div>
+
+      <div className={`max-w-[1600px] mx-auto p-3 md:p-4 grid gap-3 ${actualRouter?'grid-cols-[320px_1fr_360px]':'grid-cols-1'}`}>
+        {/* LEFT VTuber & Party */}
+        <div className="space-y-3 order-1">
+          <div className="rounded-[24px] bg-white/[0.08] border border-white/10 p-4">
+            <div className="flex justify-between items-center mb-3"><h3 className="font-bold">VTuberスタジオ</h3><span className="text-[10px] px-2 py-1 bg-red-500 rounded-full animate-pulse">● LIVE</span></div>
+            <div className="flex gap-3">
+              <div className={`w-20 h-20 rounded-[20px] bg-gradient-to-br ${vtuberType==='天使'?'from-blue-400 to-violet-500':vtuberType==='魔導'?'from-emerald-400 to-teal-600':'from-amber-400 to-pink-500'} float flex items-center justify-center text-3xl`}>{vtuberType==='天使'?'👼':vtuberType==='魔導'?'🧙':'🌟'}</div>
+              <div className="flex-1">
+                <div className="flex gap-1 mb-2">{['天使','魔導','星詠み'].map(t=><button key={t} onClick={()=>setVtuberType(t)} className={`px-2 py-1 rounded-full text-[11px] border ${vtuberType===t?'bg-white text-black border-white':'border-white/20'}`}>{t}</button>)}</div>
+                <div className="text-xs opacity-70">あなたの分身がボットと共に一垓層を配信中。表情は記録係が追従。</div>
+              </div>
+            </div>
+            <button onClick={()=>addLog(`【配信】VTuber ${vtuberType}として冒険配信を開始。視聴者0→12人に。`)} className="mt-3 w-full py-2 rounded-full bg-gradient-to-r from-violet-600 to-blue-600 font-bold text-sm">冒険配信を開始</button>
+          </div>
+
+          <div className="rounded-[24px] bg-white/[0.06] border border-white/10 p-4">
+            <h3 className="font-bold mb-3">パーティ (AIボット)</h3>
+            <div className="space-y-2">
+              {BOTS.map(b=>{
+                const active=party.includes(b.id);
+                return <div key={b.id} className={`flex items-center gap-3 p-2 rounded-2xl border ${active?'bg-white/10 border-violet-400/50':'opacity-60 border-white/5'}`}>
+                  <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${b.color} flex items-center justify-center font-bold`}>{b.icon}</div>
+                  <div className="flex-1"><div className="text-sm font-bold">{b.name} <span className="text-[10px] opacity-60">Lv{b.lv}</span></div><div className="text-[11px] opacity-70">{b.job}・{b.vtuber}</div></div>
+                  <button onClick={()=>{ if(party.includes(b.id)) setParty(p=>p.filter(x=>x!==b.id)); else setParty(p=>[...p,b.id].slice(-4)); addLog(`【編成】${b.name}を${active?'外した':'加えた'}。`); }} className="text-[10px] px-2 py-1 rounded-full bg-white/10">{active?'外す':'入れる'}</button>
+                </div>
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* CENTER Adventure */}
+        <div className="space-y-3 order-2">
+          <div className="rounded-[28px] overflow-hidden border border-white/10 bg-gradient-to-br from-indigo-900/50 to-violet-900/30 relative min-h-[420px]">
+            <div className="absolute inset-0 opacity-30" style={{backgroundImage:`radial-gradient(circle at ${Math.random()*100}% ${Math.random()*100}%, #8b5cf6, transparent 50%)`}}></div>
+            <div className="relative p-5">
+              <div className="flex justify-between"><span className="text-xs px-2 py-1 rounded-full bg-black/40">Situation: {situation}</span><span className="text-xs opacity-60">記録係: Meta AI</span></div>
+              <div className="mt-10 text-center">
+                <div className="text-5xl mb-4">🏰✨🌌</div>
+                <h2 className="text-2xl font-black">一垓層の狭間</h2>
+                <p className="text-sm opacity-80 mt-2 leading-relaxed">同じ店でも、入るたびにアイテムが変わる。<br/>同じ道でも、刻が変わればデザインが変わる。<br/>あなたの現実の行動が、幻想の地図を塗り替える。</p>
+              </div>
+              <div className="mt-8 grid grid-cols-2 gap-2">
+                {QUESTS.map((q,i)=><div key={i} className="p-3 rounded-2xl bg-black/30 border border-white/10">
+                  <div className="text-[11px] opacity-60">{q.real}</div><div className="font-bold text-sm">{q.fan}</div>
+                  <button onClick={()=>doQuest(q)} className="mt-2 w-full py-1 rounded-full bg-white text-black text-xs font-bold">挑戦する +{q.rew}🪙</button>
+                </div>)}
+              </div>
+              <div className="mt-4 flex gap-2">
+                <button onClick={openShop} className="flex-1 py-3 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 text-black font-black">🛒 不思議な店に入る (毎回品替え)</button>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-[20px] bg-black/40 border border-white/10 p-3">
+            <div className="flex justify-between items-center mb-2"><span className="font-bold text-sm">📜 年代記 - 記録係 Meta AI</span><span className="text-[10px] opacity-60">eメール + 証明書で保護</span></div>
+            <div className="h-[140px] overflow-y-auto space-y-1 text-[12px] font-mono">
+              {logs.map((l,i)=><div key={i} className="opacity-80">{l}</div>)}
+            </div>
+          </div>
+        </div>
+
+        {/* RIGHT Ad & Auth */}
+        <div className="space-y-3 order-3">
+          <div className="rounded-[24px] bg-gradient-to-br from-amber-900/40 to-orange-900/30 border border-amber-500/20 p-4">
+            <h3 className="font-bold flex items-center gap-2">📺 アドバタイズ王の間 <span className="text-[10px] px-2 py-0.5 bg-amber-500 text-black rounded-full">PiP</span></h3>
+            <div className="mt-3 rounded-xl overflow-hidden bg-black border border-white/10 aspect-video relative">
+              <div className="absolute inset-0 flex items-center justify-center flex-col">
+                <div className="text-2xl">👑📢</div><div className="text-xs mt-1 opacity-70">Picture in Picture CM</div>
+                {adWatching && <div className="mt-2 w-24 h-1 bg-white/20 rounded overflow-hidden"><div className="h-full bg-amber-400 shimmer w-full"></div></div>}
+              </div>
+              <div className="absolute bottom-2 right-2 text-[10px] px-2 py-1 bg-red-600 rounded-full animate-pulse">● CM</div>
+            </div>
+            <button onClick={watchAd} disabled={adWatching} className="mt-3 w-full py-2 rounded-full bg-amber-400 text-black font-bold text-sm disabled:opacity-50">{adWatching?'視聴中...':'CMを見る → メダル+10 (換金不可)'}</button>
+            <div className="mt-2 text-[11px] opacity-70">メダルはゲーム内アイテムとのみ交換可能。広告を見るたびに記録係が物語に広告王を登場させます。</div>
+          </div>
+
+          <div className="rounded-[24px] bg-white/[0.08] border border-white/10 p-4">
+            <h3 className="font-bold text-sm">🔐 本人確認 - eメール + スマホ証明書</h3>
+            <div className="mt-3 space-y-3">
+              <input value={email} onChange={e=>setEmail(e.target.value)} placeholder="あなたのeメール" className="w-full px-4 py-2 rounded-full bg-black/40 border border-white/10 text-sm outline-none" />
+              <div className={`p-3 rounded-2xl border text-xs ${verified?'bg-emerald-500/20 border-emerald-400/30':'bg-white/5 border-white/10'}`}>
+                <div className="font-bold">{verified?'✅ 認証済: 端末証明書が確認されました':'📱 スマホ証明書: 未認証'}</div>
+                <div className="opacity-70 mt-1">このスマホがあなた本人であることを端末証明で保証。記録係があなたの冒険を改ざん不能な年代記として保存します。</div>
+                {verified && <div className="mt-2 text-[10px] px-2 py-1 bg-black/40 rounded-full inline-block">フォロワーはeメールだけで参加、記録はあなたに紐付け</div>}
+              </div>
+              <button onClick={verify} disabled={verifying || verified} className="w-full py-2 rounded-full bg-gradient-to-r from-blue-600 to-violet-600 font-bold text-sm disabled:opacity-50">
+                {verifying?'検証中...生体認証待ち':verified?'認証完了':'端末証明書で本人確認'}
+              </button>
+            </div>
+          </div>
+
+          <div className="rounded-[20px] bg-white/5 border border-white/10 p-3 text-[11px] opacity-70">
+            <div className="font-bold mb-1">📡 表示モード</div>
+            <div>現在: <b>{actualRouter?'ルーター大画面版':'スマホ縦型版'}</b> - 同じデータ、最適化されたUIで冒険。</div>
+            <div className="mt-2 flex gap-2"><span className="px-2 py-1 rounded-full bg-white/10">ルーター版: パーティ俯瞰</span><span className="px-2 py-1 rounded-full bg-white/10">スマホ版: VTuber集中</span></div>
+          </div>
+        </div>
+      </div>
+
+      {/* Shop Modal */}
+      {showShop && (
+        <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur flex items-center justify-center p-4">
+          <div className="w-full max-w-[520px] rounded-[28px] bg-gradient-to-br from-[#1e1b4b] to-[#312e81] border border-white/20 p-5">
+            <div className="flex justify-between items-center"><h3 className="font-black text-lg">🛒 不思議な店 - 入店ごとに品替え</h3><button onClick={()=>setShowShop(false)} className="w-8 h-8 rounded-full bg-white/10">✕</button></div>
+            <p className="text-xs opacity-70 mt-1">記録係: 同じ店でも、入るたびに棚が変わる。シチュエイションが品揃えを決めるのだ。</p>
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              {shopItems.map((it,i)=><div key={i} className="p-3 rounded-2xl bg-white/10 border border-white/10">
+                <div className="text-2xl">{it.e}</div><div className="font-bold text-sm">{it.n}</div><div className="text-xs opacity-60">🪙 {it.p} メダル</div>
+                <button onClick={()=>{ if(medal>=it.p){setMedal(m=>m-it.p); addLog(`【交換】${it.n}をメダル${it.p}で入手。`);} else addLog('【不足】メダルが足りない。CMを見て稼ごう。'); }} className="mt-2 w-full py-1 rounded-full bg-amber-400 text-black text-xs font-bold">交換</button>
+              </div>)}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
